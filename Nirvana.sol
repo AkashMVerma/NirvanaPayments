@@ -42,6 +42,7 @@ contract Nirvana {
     }
     
     function deposit_collateral() public payable{
+        require(customers[msg.sender].exists == true, 'Register yourself first');
         customers[msg.sender].customer_collateral += msg.value;
     }
     
@@ -138,6 +139,7 @@ contract Nirvana {
 
     function customer_withdraw_funds() public{
         require(customers[msg.sender].exists == true, 'You do not have any balance to claim');
+        require(customers[msg.sender].customer_collateral > 0, 'You do not have any balance to claim');
         uint amount_to_transfer = customers[msg.sender].customer_collateral;
         customers[msg.sender].customer_collateral=0;
         //merchants[msg.sender].exists = false; 
