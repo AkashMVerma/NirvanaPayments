@@ -32,7 +32,7 @@ contract Nirvana {
         uint256[] merchant_payment;                 //Array of payments to a merchant. Each individual payment can be accessed using payment_nonce 
         bytes32[] secrets_for_payment;              //Array of secrets to obtain each individual payment. Each unique nonce links 1 payment to 1 secret
         uint256 merchant_balance;                   //Total balance of merchant
-        uint256[] payment_time;
+        uint256[] payment_time;                     //Recieving time of each unique payment. This is used by customer to reclaim their undisputed payments to merchant.
     }
     
     mapping(address => Merchant) public merchants;
@@ -117,6 +117,13 @@ contract Nirvana {
         delete(merchants[msg.sender]);
     }
     
+    /*
+    This function allows a customer to claim their payment back after 1 day. Since Nirvana guarantees payments after 1 latency period of the underlying
+    blockchain, 1 day is enough time for a victim merchant to reclaim their disputed payment. 
+    If 1 day passes and the customer reclaims their payment, the merchant's payment at that specific nonce becomes 0. However, other disputed payments
+    are still reclaimable.
+     */
+
     function claim_payment_customer(address merchant_paid, uint256 nonce_to_claim) public{
         require(merchants[merchant_paid].exists == true, 'Merchant does not exist.');
         require(block.timestamp >= merchants[merchant_paid].payment_time[nonce_to_claim] + 1 days, 'Not so fast, give merchant enough time to receive money.');
@@ -125,6 +132,10 @@ contract Nirvana {
         customers[msg.sender].customer_collateral += amount;
     }
     
+    /**
+    This function enables a customer to withdraw their collateral in Nirvana back to their Ethereum account, since Nirvana holds no custody.
+     */
+
     function customer_withdraw_funds() public{
         require(customers[msg.sender].exists == true, 'You do not have any balance to claim');
         uint amount_to_transfer = customers[msg.sender].customer_collateral;
@@ -134,6 +145,11 @@ contract Nirvana {
         msg.sender.transfer(amount_to_transfer);
     }
     
+
+    /**
+    This function removes a customer from Nirvana environment. This is only done after the collateral is successfully withdrawn by the customer.
+     */
+
     function remove_customer() public{
         assert(customers[msg.sender].exists == true);
         require(customers[msg.sender].customer_collateral == 0, 'You still have to claim your balance. Revoking yourself will remove that balance.');
