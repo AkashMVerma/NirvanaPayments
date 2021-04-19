@@ -52,6 +52,7 @@ function add_merchants(address payable[] memory _merchantAddresses) public onlyO
     merchants_in_network = _merchantAddresses;
     for(uint i=0; i<merchants_in_network.length; i++){
         merchants[merchants_in_network[i]].exists = true;
+        merchants[merchants_in_network[i]].earnings = 0;
     }
 }
  

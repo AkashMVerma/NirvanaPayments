@@ -163,8 +163,8 @@ async function f1(){
 ]);
 
 const signedPayment = EthCrypto.sign(customerIdentity.privateKey, paymentMessage);
-//const vrsSignedPayment = EthCrypto.vrs.fromString(signedPayment);
-console.log(vrsSignedPayment);
+const vrsSignedPayment = EthCrypto.vrs.fromString(signedPayment);
+//console.log(vrsSignedPayment);
 
 const claimingPayment = contractInstance.methods.claim_payment(paymentToBeSent, vrsSignedPayment.v, vrsSignedPayment.r, vrsSignedPayment.s, customerIdentity.address).encodeABI();
 const claimingPaymentTx = {
@@ -182,7 +182,7 @@ const customerInformation = await contractInstance.methods.customers(customerIde
 console.log(customerInformation);
 
 
-const merchantInformation = await contractInstance.methods.merchants(merchantIdentity2.address).call();
+const merchantInformation = await contractInstance.methods.merchants(merchantIdentity1.address).call();
 console.log(merchantInformation);
 web3.eth.getBalance(merchantIdentity1.address).then(console.log);
 
