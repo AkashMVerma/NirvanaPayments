@@ -1,6 +1,6 @@
 from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
-from charm.toolbox.ABEnc import ABEnc, Input, Output
+from charm.toolbox.ABEnc import Input, Output
 from secretshare import SecretShare
 
 mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gg':GT, 'vk':G2 , 'X': G1}
@@ -10,10 +10,8 @@ sk_t = { 'sk':ZR }
 Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
 Rand_t = { 'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
 ct_t = { 'C':GT, 'C1':GT }
-class Nirvana(ABEnc):
-         
+class Nirvana():
     def __init__(self, groupObj):
-        ABEnc.__init__(self)
         global util, group
         util = SecretUtil(groupObj, verbose=False)
         group = groupObj
@@ -96,6 +94,8 @@ class Nirvana(ABEnc):
 groupObj = PairingGroup('SS512')
 Nir = Nirvana(groupObj)
 SSS = SecretShare(groupObj, True)
+assert groupObj.InitBenchmark()
+groupObj.StartBenchmark(["RealTime","Mul", "Div", "Exp", "Granular"])
 
 # setup
 (mpk, msk) = Nir.Setup()
@@ -105,13 +105,14 @@ Merchants = ['Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay']
 (pk,sk) = Nir.Keygen(mpk, Merchants)
 
 # Registeration
-(Col) = Nir.Registeration(mpk, msk, 1)
+(Col) = Nir.Registeration(mpk, msk, 1000)
 print("\nCollatorel :=>", Col)
+
 # Spending
-(ct1, Rand1) = Nir.Spending(mpk, Col, pk, 1235, 1, 1)
+(ct1, Rand1) = Nir.Spending(mpk, Col, pk, 1235, 800, 1)
 print("\nFirst Ciphertext :=>\n", ct1)
 
-(ct2, Rand2) = Nir.Spending(mpk, Col, pk, 1235, 1, 2)
+(ct2, Rand2) = Nir.Spending(mpk, Col, pk, 1235, 500, 2)
 print("\nSecond Ciphertext :=>\n", ct2)
 
 # Verification 
@@ -120,5 +121,20 @@ print("\nIs the First Merhcnat accepted?", out1)
 (out2)= Nir.Verification(mpk,ct2,Rand2)
 print("\nIs the Second Merchant accepted?", out2)
 
+# Decryption
 (out)= Nir.Decryption(mpk,ct1,ct2)
 print("\n", out)
+
+
+
+#Benchmark
+groupObj.EndBenchmark()
+msmtDict = groupObj.GetGeneralBenchmarks()
+print("<=== General Benchmarks ===>")
+print("Mul := ", msmtDict["Mul"])
+print("Div := ", msmtDict["Div"])
+print("Exp := ", msmtDict["Exp"])
+print("RealTime := ", msmtDict["RealTime"])
+granDict = group.GetGranularBenchmarks()
+print("<=== Granular Benchmarks ===>")
+print("G mul   := ", granDict)
