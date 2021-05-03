@@ -2,18 +2,22 @@ from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
 from charm.toolbox.ABEnc import Input, Output
 from secretshare import SecretShare
+from charm.core.engine.util import objectToBytes
+import random
+from openpyxl import load_workbook
+from openpyxl import Workbook
 
 mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gg':GT, 'vk':G2 , 'X': G1 }
 msk_t = { 'sec':ZR, 'sgk':ZR }
 pk_t = { 'pk':G2, 'Merlist':str }
 sk_t = { 'sk':ZR }
 Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
-Rand_t = { 'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1 }
+Rand_t = { 'key':G1, 'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1, 'd':int }
 ct_t = { 'C':GT, 'C1':GT }
 class Nirvana():
     def __init__(self, groupObj):
         global util, group
-        util = SecretUtil(groupObj, verbose=False)
+        util = SecretUtil(groupObj)
         group = groupObj
     
     @Output(mpk_t, msk_t)    
@@ -31,7 +35,6 @@ class Nirvana():
     def Keygen(self, mpk, msk, Merchants):
         pkey = {}
         shares = SSS.genShares(msk['sec'], 2, len(Merchants))
-        print("\nSecret\n =>", msk['sec'])
         for i in range(len(shares)-1):
             pkey[i] = mpk['h'] ** shares[i+1]
         pk = {'pk': pkey, 'Merlist': Merchants}
@@ -51,9 +54,9 @@ class Nirvana():
         W = mpk['g']**(1/t)
         return { 'PRFkey': PRFkey, 'key': key, 'R':R, 'S':S, 'T':T, 'W':W }
 
-    @Input(mpk_t, Col_t, pk_t, int, int, str)
+    @Input(mpk_t, Col_t, pk_t, int, int, int)
     @Output(Rand_t, ct_t)
-    def Spending(self, mpk, Col, pk, time, d ,M):
+    def Spending(self, mpk, Col, pk, time, d ,N):
         SAgg=1; TAgg=1; PRFkey=0; key=1
         if len(Col['PRFkey']) >= d:
             for i in range(d):
@@ -69,7 +72,6 @@ class Nirvana():
             r = mpk['g'] ** (1/(PRFkey+time))
             ID = group.random(GT)
             C = ID * (pair(r, mpk['pp']))
-            N = pk['Merlist'].index(M)
             C1 = pair(r, pk['pk'][N])
             Rand = { 'key': key, 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime, 'd':d }
             ct = {'C': C, 'C1': C1}
@@ -90,6 +92,7 @@ class Nirvana():
     @Output(GT)
     def Decryption(self, mpk, ct1, M1, ct2, M2): 
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
-        print(Coeff)
         return ct1['C']/ ((ct1['C1']**Coeff[M1+1])*(ct2['C2']**Coeff[M2+1]))
+
+
 

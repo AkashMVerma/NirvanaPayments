@@ -1,75 +1,82 @@
+from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
+from charm.toolbox.secretutil import SecretUtil
+from charm.toolbox.ABEnc import Input, Output
+from secretshare import SecretShare
+from charm.core.engine.util import objectToBytes
+import random
+from openpyxl import load_workbook
+from openpyxl import Workbook
+
 
 def start_bench(group):
     group.InitBenchmark()
-    group.StartBenchmark(["RealTime", "CpuTime"])
+    group.StartBenchmark(["RealTime"])
 
-def end_bench(group, operation):
+def end_bench(group):
     group.EndBenchmark()
     benchmarks = group.GetGeneralBenchmarks()
-    cpu_time = benchmarks['CpuTime']
     real_time = benchmarks['RealTime']
-    return "%s,%f,%f" % (operation, cpu_time, real_time)
+    return real_time
 
 groupObj = PairingGroup('BN254')
 Nir = Nirvana(groupObj)
-SSS = SecretShare(groupObj, True)
+SSS = SecretShare(groupObj)
 
-def run_round_trip(n,d):
-
-
+def run_round_trip(n,d,M):
+    result=[n,d,M]
     # setup
     start_bench(groupObj)
     (mpk, msk) = Nir.Setup()
-    setup_time = end_bench(groupObj, "Setup")
+    setup_time = end_bench(groupObj)
+    result.append(setup_time)
     public_parameters_size = len(objectToBytes(mpk, groupObj))
-
+    result.append(public_parameters_size)
     # Key Gen
     start_bench(groupObj)
-    Merchants = ['Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay']
+    Mer = ['Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA']
+    Merchants=random.sample(Mer, M)
+    print(Merchants)
     (pk,sk) = Nir.Keygen(mpk, msk, Merchants)
-    Key_Gen_time = end_bench(groupObj, "Key Gen")
-
+    Key_Gen_time = end_bench(groupObj)
+    result.append(Key_Gen_time)
 
     # Registeration
     start_bench(groupObj)
     (Col) = Nir.Registeration(mpk, msk, n)
-    #print("\nCollatorels :=>", Col)
-    Registeration_time = end_bench(groupObj, "Registeration")
-
+    Registeration_time = end_bench(groupObj)
+    Collateral_size = len(objectToBytes(Col, groupObj))
+    result.append(Registeration_time)
+    result.append(Collateral_size)
     # Spending
     start_bench(groupObj)
-    (ct1, Rand1) = Nir.Spending(mpk, Col, pk, 1235, d, 'Apple')
-    #print("\nFirst Ciphertext :=>\n", ct1)
-    Spending_time = end_bench(groupObj, "Spending_time")
+    #N = pk['Merlist'].index('Apple')
+    (ct1, Rand1) = Nir.Spending(mpk, Col, pk, 1235, d, 2)
+    Spending_time = end_bench(groupObj)
+    result.append(Spending_time)
     Ciphertext_size = len(objectToBytes(ct1, groupObj))
-    (ct2, Rand2) = Nir.Spending(mpk, Col, pk, 1235, d, 'Amazon')
-    #print("\nSecond Ciphertext :=>\n", ct2)
+    result.append(Ciphertext_size)
+    (ct2, Rand2) = Nir.Spending(mpk, Col, pk, 1235, d, 3)
 
     # Verification 
     start_bench(groupObj)
     (out1)= Nir.Verification(mpk,ct1,Rand1)
-    #print("\nIs the First Merhcnat accepted?", out1)
-    Verification_time = end_bench(groupObj, "Verification")
-
+    Verification_time = end_bench(groupObj)
+    result.append(Verification_time)
     #(out2)= Nir.Verification(mpk,ct2,Rand2)
     #print("\nIs the Second Merchant accepted?", out2)
 
     # Decryption
     start_bench(groupObj)
-    (out)= Nir.Decryption(mpk, ct1, pk['Merlist'].index('Apple'), ct2, pk['Merlist'].index('Amazon'))
-    print("\n", out)
-    Decryption_time = end_bench(groupObj, "Decryption_time")
+    (out)= Nir.Decryption(mpk, ct1, 2, ct2, 3)
+    Decryption_time = end_bench(groupObj)
+    result.append(Decryption_time)
 
-    return {'proxy_keygen_exec_time': setup_time,
-            'encrypt_exec_time': Key_Gen_time,
-            'proxy_decrypt_exec_time': Registeration_time,
-            'Spending_time': Spending_time,
-            'Verification_time': Verification_time,
-            'decrypt_exec_time': Decryption_time
-            }
+    return result
 
-for n in range(1, 2):
-    result = run_round_trip(1000,1000)
-    print("function,CpuTime,RealTime")
-    [print(v) for v in result.values()]
-
+book=Workbook()
+data=book.active
+title=["n","d","M","setup_time","public_parameters_size", "Key_Gen_time","Registeration_time","Collateral_size","Spending_time","Ciphertext_size","Verification_time","Decryption_time"]
+data.append(title)
+for n in range(2,100,2):
+    data.append(run_round_trip(n,n,n+2))
+book.save("Result.xlsx")

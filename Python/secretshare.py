@@ -29,15 +29,14 @@ class SecretShare:
 
         # debug
         if self.verbose:
-            print('Secret: %s' % secret)
-            for i in range(0, k):
-                print("a %s: %s" % (i, q[i]))
+            for i in range(0, 1):
+                print("")
             print('')
             if x_points == None:
-                for i in range(1,n+1):
+                for i in range(1,1):
                     print('Share %s: %s' % (i, shares[i]))
             else:
-                for i in range(len(x_points)):
+                for i in range(1):
                     print('Share %s: %s' % (i, shares[i]))
             
         return shares
@@ -51,7 +50,7 @@ class SecretShare:
                 if not (i == j):
                     # lagrange basis poly
                     result *= (0 - j) / (i - j)
-            if self.verbose: print("coeff '%d' => '%s'" % (i, result))
+            if self.verbose: print("")
             coeff[i] = result
         return coeff
 
@@ -64,7 +63,6 @@ class SecretShare:
                 if not (i == j):
                     # lagrange basis poly
                     result *= (0 - j) / (i - j)
-            if self.verbose: print("coeff '%d' => '%s'" % (i, result))
             coeff[i] = result
         return coeff
         
