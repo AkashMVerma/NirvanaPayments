@@ -1,4 +1,6 @@
 
+
+
 def start_bench(group):
     group.InitBenchmark()
     group.StartBenchmark(["RealTime"])
@@ -13,31 +15,32 @@ groupObj = PairingGroup('BN254')
 Nir = Nirvana(groupObj)
 SSS = SecretShare(groupObj)
 
+Mer = ['Apple'] * 2001
+
+
 def run_round_trip(n,d,M):
     result=[n,d,M]
     # setup
     
     setup_time = 0
-    for i in range(10):
+    for i in range(100):
         start_bench(groupObj)
         (mpk, msk) = Nir.Setup()
         setup_time += end_bench(groupObj)
-    setup_time = setup_time * 100
+    setup_time = setup_time * 10
     result.append(setup_time)
-    public_parameters_size = len(objectToBytes(mpk, groupObj))
+    public_parameters_size = sum([len(x) for x in serializeDict(mpk, groupObj).values()]) 
     result.append(public_parameters_size)
     # Key Gen
-    Mer = ['Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA', 'Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA','Apple', 'Tesco', 'Tesla', 'Amazon', 'Bol', 'Ebay', 'Colruyt', 'Delhaize', 'Albert', 'IKEA']
-    print(len(Mer))
-    Merchants=random.sample(Mer, M)
+    Merchants = random.sample(Mer, M)
     Key_Gen_time=0
-    for i in range(10):
+    for i in range(100):
         start_bench(groupObj)
         (pk,sk) = Nir.Keygen(mpk, msk, Merchants)
         Key_Gen_time += end_bench(groupObj)
-    Key_Gen_time = Key_Gen_time *100
-    public_key_size = len(objectToBytes(pk, groupObj))
-    secret_key_size = len(objectToBytes(sk, groupObj))
+    Key_Gen_time = Key_Gen_time * 10
+    public_key_size = sum([len(x) for x in serializeDict(pk, groupObj).values()]) 
+    secret_key_size = sum([len(x) for x in serializeDict(sk, groupObj).values()]) 
     secret_key_size = secret_key_size /1000
     public_key_size = public_key_size /1000
     result.append(Key_Gen_time)
@@ -47,12 +50,12 @@ def run_round_trip(n,d,M):
     # Registeration
     
     Registeration_time=0
-    for i in range(10):
+    for i in range(100):
         start_bench(groupObj)
         (Col) = Nir.Registeration(mpk, msk, n)
         Registeration_time += end_bench(groupObj)
-    Registeration_time = Registeration_time * 100
-    Collateral_size = len(objectToBytes(Col, groupObj))
+    Registeration_time = Registeration_time * 10
+    Collateral_size = sum([len(x) for x in serializeDict(Col, groupObj).values()]) 
     Collateral_size = Collateral_size /1000
     result.append(Registeration_time)
     result.append(Collateral_size)
@@ -61,33 +64,35 @@ def run_round_trip(n,d,M):
     
     #N = pk['Merlist'].index('Apple')
     Spending_time = 0
-    for i in range(10):
+    for i in range(100):
         start_bench(groupObj)
         (ct1, Rand1) = Nir.Spending(mpk, Col, pk, 1235, d, 10)
         Spending_time += end_bench(groupObj)
-    Spending_time = Spending_time * 100
+    Spending_time = Spending_time * 10
     result.append(Spending_time)
-    Ciphertext_size = len(objectToBytes(ct1, groupObj))+len(objectToBytes(Rand1, groupObj))
+    Ciphertext_size = sum([len(x) for x in serializeDict(ct1, groupObj).values()]) + sum([len(x) for x in serializeDict(Rand1, groupObj).values()]) 
     result.append(Ciphertext_size)
     (ct2, Rand2) = Nir.Spending(mpk, Col, pk, 1235, d, 11)
 
     # Verification 
     Verification_time = 0
-    for i in range(10):
+    for i in range(100):
         start_bench(groupObj)
-        out=Nir.Verification(mpk,Rand1)
+        Ledger=[]
+        out=Nir.Verification(mpk,Rand1,ct1,d,Ledger)
         Verification_time += end_bench(groupObj)
-    Verification_time = Verification_time * 100
+    Verification_time = Verification_time * 10
     result.append(Verification_time) 
     #(out2)= Nir.Verification(mpk,ct2,Rand2)
     #print("\nIs the Second Merchant accepted?", out2)
 
     # Decryption
-    start_bench(groupObj)
-    (out)= Nir.Decryption(mpk, ct1, 1, ct2, 2)
-    print(out)
-    Decryption_time = end_bench(groupObj)
-    Decryption_time = Decryption_time *1000
+    Decryption_time = 0
+    for i in range(100):
+        start_bench(groupObj)
+        (out)= Nir.Decryption(mpk, ct1, 1, ct2, 2)
+        Decryption_time += end_bench(groupObj)
+    Decryption_time = Decryption_time * 10
     result.append(Decryption_time)
 
     return result
@@ -99,4 +104,4 @@ data.append(title)
 for n in range(1,41):
     data.append(run_round_trip(n,n,50*n))
     print(n)
-book.save("Result2.xlsx")
+book.save("Result1.xlsx")

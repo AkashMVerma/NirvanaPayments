@@ -2,7 +2,7 @@ from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
 from charm.toolbox.ABEnc import Input, Output
 from secretshare import SecretShare
-from charm.core.engine.util import objectToBytes
+from charm.core.engine.util import serializeDict
 import random
 from openpyxl import load_workbook
 from openpyxl import Workbook
@@ -12,9 +12,10 @@ msk_t = { 'sec':ZR, 'sgk':ZR }
 pk_t = { 'pk':G2, 'Merlist':str }
 sk_t = { 'shares': ZR }
 Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
-Rand_t = {'key':G1, 'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1, 'd':int}
+Rand_t = {'key':G1, 'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
 ct_t = { 'C':GT, 'C1':GT, 'r_t':GT }
 prf_t= {'H':G1, 't':G1, 'c':ZR, 'r':ZR}
+
 class Nirvana():
     def __init__(self, groupObj):
         global util, group
@@ -75,17 +76,17 @@ class Nirvana():
             ID = group.random(GT)
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
-            Rand = { 'key': key, 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime, 'd':d }
+            Rand = { 'key': key, 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
             ct = {'C': C, 'C1': C1, 'r_t':r_t}
             return (ct,Rand)
         else:
             return (print("You don't have enough money in your account"), None)
 
-    @Input(mpk_t, Rand_t, ct_t, list)
+    @Input(mpk_t, Rand_t, ct_t, int, list)
     @Output(list)
-    def Verification(self, mpk, Rand, ct, Ledger): 
-        if pair(Rand['Sprime'], Rand['Rprime'])==pair(Rand['key'],mpk['vk'])* pair(mpk['X'],(mpk['h']**Rand['d'])) and \
-            pair(Rand['Tprime'],Rand['Rprime'])==pair(Rand['Sprime'],mpk['vk'])*pair(mpk['g']**Rand['d'],mpk['h']) and \
+    def Verification(self, mpk, Rand, ct, d, Ledger): 
+        if pair(Rand['Sprime'], Rand['Rprime'])==pair(Rand['key'],mpk['vk'])* pair(mpk['X'],(mpk['h']**d)) and \
+            pair(Rand['Tprime'],Rand['Rprime'])==pair(Rand['Sprime'],mpk['vk'])*pair(mpk['g']**d,mpk['h']) and \
                 ct['r_t'] not in Ledger:
                 Ledger.append(ct['r_t'])
                 return Ledger
