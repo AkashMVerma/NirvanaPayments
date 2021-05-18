@@ -27,10 +27,16 @@ class PoK2():
         t = pair(g,u) ** r
         c = group.hash(objectToBytes(y, group)+objectToBytes(t, group)+objectToBytes(u, group),ZR)
         z = c * x + r
-        return { 'z':z, 't':t }
+        return { 'z':z, 't':t, 'y':y }
     def verifier(self, g, y, z, t, u):
         c = group.hash(objectToBytes(y, group)+objectToBytes(t, group)+objectToBytes(u, group),ZR)
         if (y**c) * t == pair(g,u) ** z:
+            return 1
+        else:
+            return 0
+    def verifier2(self, y, z, t, p, u):
+        c = group.hash(objectToBytes(y, group)+objectToBytes(t, group)+objectToBytes(u, group),ZR)
+        if (y**c) * t == p ** z:
             return 1
         else:
             return 0
@@ -39,7 +45,7 @@ class PoK3():
     def __init__(self, groupObj):
         global util, group
         group = groupObj
-    def prover(self,g,y,x,R):
+    def prover(self,y,x,R):
         t=1; Rbyte=objectToBytes(0, group); r=[]; z=[]
         for i in range(len(x)):
             r.append(group.random(ZR))
@@ -48,8 +54,8 @@ class PoK3():
         c = group.hash(objectToBytes(y, group) + objectToBytes(t, group) + Rbyte, ZR)
         for i in range(len(x)):
             z.append(c * x[i] + r[i])
-        return { 'z':z, 't':t } 
-    def verifier(self, g, y, z, t, R):
+        return { 'z':z, 't':t, 'y':y } 
+    def verifier(self, y, z, t, R):
         Rbyte=objectToBytes(0,group); RHS=1
         for i in range(len(R)):
             RHS *= R[i] ** z[i]
@@ -59,6 +65,7 @@ class PoK3():
             return 1
         else:
             return 0
+
 
 '''
 groupObj = PairingGroup('BN254')
@@ -87,5 +94,8 @@ for i in range(10):
 
 (proof3) = PoK3.prover(g,y,X,R)
 (result3) = PoK3.verifier(g,y,proof3['z'],proof3['t'],R)
+print(result2)
+(proof4) = PoK4.prover(g,y,X,R)
+(result4) = PoK4.verifier(g,proof4['y'],proof4['z'],proof4['t'],R)
 print(result2)
 '''
