@@ -2,18 +2,22 @@ from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
 from charm.toolbox.ABEnc import Input, Output
 from secretshare import SecretShare
-from charm.core.engine.util import serializeDict
+from charm.core.engine.util import serializeDict,objectToBytes
 import random
+from datetime import datetime
 from openpyxl import load_workbook
+
 from openpyxl import Workbook
+from PoK import PoK1, PoK2, PoK3
 
 mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gh':GT, 'vk':G2 , 'X': G1 }
 msk_t = { 'sec':ZR, 'sgk':ZR }
 pk_t = { 'pk':G2, 'Merlist':str }
 sk_t = { 'shares': ZR }
 Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
-Rand_t = {'key':G1, 'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
-ct_t = { 'C':GT, 'C1':GT, 'r_t':GT }
+Rand_t = {'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
+ct_t = { 'C':GT, 'C1':GT, 'R':GT}
+proof_t = {'z': ZR, 't': GT, 'y': GT}
 prf_t= {'H':G1, 't':G1, 'c':ZR, 'r':ZR}
 
 class Nirvana():
@@ -56,42 +60,52 @@ class Nirvana():
         W = mpk['g']**(1/t)
         return { 'PRFkey': PRFkey, 'key': key, 'R':R, 'S':S, 'T':T, 'W':W }
 
-    @Input(mpk_t, Col_t, pk_t, int, int, int)
-    @Output(ct_t,Rand_t)
+    @Input(mpk_t, Col_t, pk_t, ZR, int, int)
+    @Output(ct_t,Rand_t,proof_t,proof_t)
     def Spending(self, mpk, Col, pk, time, d ,N):
-        SAgg=1; TAgg=1; PRFkey=0; key=1
+        SAgg=1; TAgg=1; PRFkey=0; R=[]; X=[]; y2=1
         if len(Col['PRFkey']) >= d:
             for i in range(d):
                 SAgg *= Col['S'][i]
                 TAgg *= Col['T'][i]
                 PRFkey += Col['PRFkey'][i]
-                key *= Col['key'][i]
+                R.append(mpk['e_gh'] ** (1/(Col['PRFkey'][i]+time)))
+                X.append(Col['PRFkey'][i])
+                y2 *= R[i] ** X[i]
+                A = pair(mpk['g'],mpk['vk']) ** PRFkey
             tprime = group.random(ZR)
             Rprime = Col['R'] ** (1/tprime)
             Sprime = SAgg ** tprime
             Tprime = (TAgg ** (tprime**2))* (Col['W']**(d*tprime*(1-tprime)))
             Wprime = Col['W'] ** (1/tprime)
             r = mpk['g'] ** (1/(PRFkey+time))
-            r_t = mpk['e_gh'] ** (1/(PRFkey+time))
             ID = group.random(GT)
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
-            Rand = { 'key': key, 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
-            ct = {'C': C, 'C1': C1, 'r_t':r_t}
-            return (ct,Rand)
+            (proof1) = PoK2.prover(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
+            (proof2) = PoK3.prover(y2,X,R) # Proof of Aggeragetd collatorals
+            Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
+            ct = {'C': C, 'C1': C1, 'R':R}
+            return (ct,Rand,proof1,proof2)
         else:
             return (print("You don't have enough money in your account"), None)
 
-    @Input(mpk_t, Rand_t, ct_t, int, list)
+    @Input(mpk_t, Rand_t, ct_t, proof_t, proof_t, int, list, ZR)
     @Output(list)
-    def Verification(self, mpk, Rand, ct, d, Ledger): 
-        if pair(Rand['Sprime'], Rand['Rprime'])==pair(Rand['key'],mpk['vk'])* pair(mpk['X'],(mpk['h']**d)) and \
-            pair(Rand['Tprime'],Rand['Rprime'])==pair(Rand['Sprime'],mpk['vk'])*pair(mpk['g']**d,mpk['h']) and \
-                ct['r_t'] not in Ledger:
-                Ledger.append(ct['r_t'])
+    def Verification(self, mpk, Rand, ct, proof1, proof2, d, Ledger, time):
+        LHS=1
+        for i in range(len(ct['R'])):
+            LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
+        if pair(Rand['Sprime'], Rand['Rprime'])==proof1['y'] * pair(mpk['X'],(mpk['h']**d)) and \
+            pair(Rand['Tprime'],Rand['Rprime'])==pair(Rand['Sprime'],mpk['vk'])* mpk['e_gh']**d and \
+                LHS==proof2['y'] and \
+                    PoK2.verifier(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
+                        PoK3.verifier(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
+                            ct['R'] not in Ledger:
+                Ledger.append(ct['R'])
                 return Ledger
         else:
-            return 0
+            return Ledger
 
     @Input(mpk_t, ct_t, int, ct_t, int)
     @Output(GT)
@@ -100,4 +114,3 @@ class Nirvana():
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))
 
 
-        
