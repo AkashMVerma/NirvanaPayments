@@ -61,7 +61,7 @@ class Nirvana():
         return { 'PRFkey': PRFkey, 'key': key, 'R':R, 'S':S, 'T':T, 'W':W }
 
     @Input(mpk_t, Col_t, pk_t, ZR, int, int)
-    @Output(ct_t,Rand_t,proof_t,proof_t)
+    @Output(ct_t,Rand_t,proof_t,proof_t,proof_t)
     def Spending(self, mpk, Col, pk, time, d ,N):
         SAgg=1; TAgg=1; PRFkey=0; R=[]; X=[]; y2=1
         if len(Col['PRFkey']) >= d:
@@ -84,24 +84,27 @@ class Nirvana():
             C1 = pair(r, pk['pk'][N])
             (proof1) = PoK2.prover(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = PoK3.prover(y2,X,R) # Proof of Aggeragetd collatorals
+            (proof3) = PoK2.prover(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
             ct = {'C': C, 'C1': C1, 'R':R}
-            return (ct,Rand,proof1,proof2)
+            return (ct,Rand,proof1,proof2,proof3)
         else:
             return (print("You don't have enough money in your account"), None)
 
-    @Input(mpk_t, Rand_t, ct_t, proof_t, proof_t, int, list, ZR)
+    @Input(mpk_t, pk_t, Rand_t, ct_t, proof_t, proof_t, proof_t, int, list, ZR, int)
     @Output(list)
-    def Verification(self, mpk, Rand, ct, proof1, proof2, d, Ledger, time):
+    def Verification(self, mpk, pk, Rand, ct, proof1, proof2, proof3, d, Ledger, time, N):
         LHS=1
         for i in range(len(ct['R'])):
             LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
         if pair(Rand['Sprime'], Rand['Rprime'])==proof1['y'] * pair(mpk['X'],(mpk['h']**d)) and \
             pair(Rand['Tprime'],Rand['Rprime'])==pair(Rand['Sprime'],mpk['vk'])* mpk['e_gh']**d and \
                 LHS==proof2['y'] and \
+                    pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['y'] and \
                     PoK2.verifier(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
                         PoK3.verifier(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
-                            ct['R'] not in Ledger:
+                            PoK2.verifier2(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
+                                ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
                 return Ledger
         else:
@@ -114,3 +117,4 @@ class Nirvana():
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))
 
 
+        
