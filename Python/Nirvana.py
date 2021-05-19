@@ -7,7 +7,7 @@ import random
 from datetime import datetime
 from openpyxl import load_workbook
 from openpyxl import Workbook
-from PoK import PoK1, PoK2, PoK3
+from PoK import PoK
 
 mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gh':GT, 'e_Xh':GT, 'vk':G2 , 'X': G1 }
 msk_t = { 'sec':ZR, 'sgk':ZR }
@@ -91,6 +91,26 @@ class Nirvana():
         else:
             return (print("You don't have enough money in your account"), None)
 
+
+    @Input(mpk_t, Col_t, pk_t, ZR, int, int, ZR, GT, ZR, list, GT)
+    @Output(ct_t,proof_t,proof_t,proof_t,proof1_t)
+    def PPSpending(self, mpk, Col, pk, time, d ,N, IDsk, ID, PRFkey, X, A):
+        R=[]; y2=1
+        if len(Col['PRFkey']) >= d:
+            for i in range(d):
+                R.append(mpk['e_gh'] ** (1/(X[i]+time)))
+                y2 *= R[i] ** X[i]
+            r = mpk['g'] ** (1/(PRFkey+time))
+            C = ID * (pair(r, mpk['pp']))
+            C1 = pair(r, pk['pk'][N])
+            (proof1) = PoK.prover3(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
+            (proof2) = PoK.prover4(y2,X,R) # Proof of Aggeragetd collatorals
+            (proof3) = PoK.prover3(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
+            (proof4) = PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
+            ct = { 'C': C, 'C1': C1, 'R':R }
+            return (ct, proof1, proof2, proof3, proof4)
+        else:
+            return (print("You don't have enough money in your account"), None)
     @Input(mpk_t, pk_t, Rand_t, ct_t, proof_t, proof_t, proof_t, proof1_t, int, list, ZR, int)
     @Output(list)
     def Verification(self, mpk, pk, Rand, ct, proof1, proof2, proof3, proof4, d, Ledger, time, N):
@@ -117,3 +137,4 @@ class Nirvana():
     def Decryption(self, mpk, ct1, M1, ct2, M2): 
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))
+
