@@ -6,11 +6,11 @@ from openpyxl import load_workbook
 from openpyxl import Workbook
 book=Workbook()
 data=book.active
-dfrow = load_workbook(filename="Python/Result1.xlsx",  data_only=True)
+dfrow = load_workbook(filename="Result1.xlsx",  data_only=True)
 df = dfrow.active
 def col(c,df):
     col=[]
-    for i in range(2,31):
+    for i in range(2,22):
         col.append(df.cell(row=i,column=c).value)
     return col
 n=col(1,df)
@@ -28,61 +28,60 @@ ciphertext=col(12,df)
 Verificationtime=col(13,df)
 decryptiontime=col(14,df)
 
-fig, ((ax4, ax0, ax1),(ax2, ax3, ax5)) = plt.subplots(nrows=2, ncols=3, sharex=True,
+fig, ((ax4, ax0, ax1),(ax2, ax3, ax5)) = plt.subplots(nrows=2, ncols=3,
                                     figsize=(14, 8))
-ax0.set_title('Registration time')
+#ax0.set_title('Registration time')
 ax0.errorbar(n,Registrationtime,color='maroon', linestyle='dashed', linewidth = 2,
-         marker='o', markerfacecolor='r', markersize=8, label='Registration time')
+         marker='o', markerfacecolor='r', markersize=6, label='Registration time')
 ax0.grid()
-#ax0.legend(loc=2,prop={'size': 12})
+ax0.legend(loc=2,prop={'size': 12})
 ax0.set_xlabel('Number of Collaterals')
 ax0.set_ylabel('Time (sec)')
 
-ax1.set_title('Collateral size')
+#ax1.set_title('Collateral size')
 ax1.plot(n,Collateralsize,color='maroon', linestyle='dashed', linewidth = 2,
-         marker='o', markerfacecolor='r', markersize=8)
+         marker='o', markerfacecolor='r', markersize=6,label='Collateral size')
 ax1.grid()
-
+ax1.legend(loc=2,prop={'size': 12})
 ax1.set_xlabel('Number of Collaterals')
 ax1.set_ylabel('Size (byte)')
 
 
 
-ax2.set_title('Speending time')
-ax2.plot(d,Speendingtime,color='purple', linestyle='dashed', linewidth = 2,
-         marker='+', markerfacecolor='gold', markersize=8)
+#ax2.set_title('Speending time')
+ax2.plot(d,Speendingtime,color='darkgreen', linestyle='dashed', linewidth = 2,
+         marker='o', markerfacecolor='maroon', markersize=6,label='Spending time')
 ax2.grid()
-
+ax2.legend(loc=2,prop={'size': 12})
 ax2.set_xlabel('Number of Collaterals')
 ax2.set_ylabel('Time (sec)')
 
 
-ax3.set_title('ciphertext Size')
+#ax3.set_title('ciphertext Size')
 ax3.errorbar(n,ciphertext,color='b', linestyle='dashed', linewidth = 2,
-         marker='o', markerfacecolor='r', markersize=8)
+         marker='o', markerfacecolor='purple', markersize=6,label='Ciphertext Size')
 ax3.grid()
-#ax3.legend(loc=2,prop={'size': 12})
+ax3.legend(loc=2,prop={'size': 12})
 ax3.set_xlabel('Number of Collatorals')
 ax3.set_ylabel('Size (byte)')
 #ax3.set_ylim([0,45])
 
-ax4.set_title('Key Gen time')
-ax4.errorbar(n,keygentime,color='b', linestyle='dashed', linewidth = 2,
-         marker='o', markerfacecolor='r', markersize=8)
+#ax4.set_title('Key Gen time')
+ax4.errorbar(M,keygentime,color='b', linestyle='dashed', linewidth = 2,
+         marker='o', markerfacecolor='r', markersize=6,label='Key Gen time')
 ax4.grid()
-#ax4.legend(loc=2,prop={'size': 12})
+ax4.legend(loc=2,prop={'size': 12})
 ax4.set_xlabel('Number of Merchants')
 ax4.set_ylabel('Time (ms)')
 #ax4.set_ylim([0,7])
 
-ax5.set_title('Verification time')
+#ax5.set_title('Verification time')
 ax5.errorbar(n,Verificationtime,color='b', linestyle='dashed', linewidth = 2,
-         marker='o', markerfacecolor='r', markersize=8)
+         marker='o', markerfacecolor='g', markersize=6,label='Verification time')
 ax5.grid()
-#ax5.legend(loc=2,prop={'size': 12})
-ax5.set_xlabel('Number of updates')
-ax5.set_ylabel('Size (byte)')
+ax5.legend(loc=2,prop={'size': 12})
+ax5.set_xlabel('Number of Collaterals')
+ax5.set_ylabel('Time (Sec)')
 #ax5.set_ylim([0,1500])
 plt.draw()
-plt.show()
-#plt.savefig("Perf.pdf", bbox_inches='tight')
+plt.savefig("performance.pdf", bbox_inches='tight')
