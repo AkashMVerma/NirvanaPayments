@@ -81,10 +81,10 @@ class Nirvana():
             r = mpk['g'] ** (1/(PRFkey+time))
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
-            (proof1) = PoK2.prover(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
-            (proof2) = PoK3.prover(y2,X,R) # Proof of Aggeragetd collatorals
-            (proof3) = PoK2.prover(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
-            (proof4) = PoK1.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
+            (proof1) = PoK.prover3(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
+            (proof2) = PoK.prover4(y2,X,R) # Proof of Aggeragetd collatorals
+            (proof3) = PoK.prover3(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
+            (proof4) = PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
             ct = { 'C': C, 'C1': C1, 'R':R }
             return (ct, Rand, proof1, proof2, proof3, proof4)
@@ -102,10 +102,10 @@ class Nirvana():
                 LHS==proof2['y'] and \
                     pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['y'] and \
                     pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['y'] and \
-                    PoK2.verifier(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
-                        PoK3.verifier(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
-                            PoK2.verifier2(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
-                                PoK1.verifier2(ct['C'],mpk['e_gh'],proof4['y'],proof4['z1'],proof4['z2'],proof4['t'])==0 and \
+                    PoK.verifier3(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
+                        PoK.verifier5(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
+                            PoK.verifier4(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
+                                PoK.verifier2(ct['C'],mpk['e_gh'],proof4['y'],proof4['z1'],proof4['z2'],proof4['t'])==0 and \
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
                 return Ledger
