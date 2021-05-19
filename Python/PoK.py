@@ -10,10 +10,23 @@ class PoK1():
         t = g ** r
         c = group.hash(objectToBytes(y, group)+objectToBytes(t, group),ZR)
         z = c * x + r
-        return { 'z':z, 't':t }        
+        return { 'z':z, 't':t, 'y':y }
+    def prover2(self, Ct, g, y, x1, x2):
+        r1 = group.random(ZR); r2 = group.random(ZR)
+        t = (Ct ** r1) * (g ** r2)
+        c = group.hash(objectToBytes(y, group)+objectToBytes(t, group),ZR)
+        z1 = c * x1 + r1
+        z2 = c * x2 + r2
+        return { 'z1':z1, 'z2':z2, 't':t, 'y':y }      
     def verifier(self, g, y, z, t):
         c = group.hash(objectToBytes(y, group)+objectToBytes(t, group),ZR)
         if (y**c) * t == g ** z:
+            return 1
+        else:
+            return 0
+    def verifier2(self, Ct, g, y, z1, z2, t):
+        c = group.hash(objectToBytes(y, group)+objectToBytes(t, group),ZR)
+        if (y**c) * t == (Ct ** z1) * (g ** z2):
             return 1
         else:
             return 0
@@ -65,6 +78,8 @@ class PoK3():
             return 1
         else:
             return 0
+
+
 
 
 '''

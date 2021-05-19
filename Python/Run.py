@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 from openpyxl import Workbook
 from PoK import PoK1, PoK2, PoK3
 
-mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gh':GT, 'vk':G2 , 'X': G1 }
+mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gh':GT, 'e_Xh':GT, 'vk':G2 , 'X': G1 }
 msk_t = { 'sec':ZR, 'sgk':ZR }
 pk_t = { 'pk':G2, 'Merlist':str }
 sk_t = { 'shares': ZR }
@@ -18,6 +18,7 @@ Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
 Rand_t = {'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
 ct_t = { 'C':GT, 'C1':GT, 'R':GT}
 proof_t = {'z': ZR, 't': GT, 'y': GT}
+proof1_t = {'z1': ZR, 'z2': ZR, 't': GT, 'y': GT}
 prf_t= {'H':G1, 't':G1, 'c':ZR, 'r':ZR}
 
 class Nirvana():
@@ -31,8 +32,8 @@ class Nirvana():
         g, h, sec, sgk = group.random(G1), group.random(G2), group.random(ZR), group.random(ZR)
         g.initPP(); h.initPP()
         pp = h ** sec; e_gh = pair(g,h)
-        vk = h ** sgk; X = group.random(G1)
-        mpk = {'g':g, 'h':h, 'pp':pp, 'e_gh':e_gh, 'vk': vk, 'X': X}
+        vk = h ** sgk; X = group.random(G1); e_Xh=pair(X,h)
+        mpk = {'g':g, 'h':h, 'pp':pp, 'e_gh':e_gh, 'e_Xh':e_Xh, 'vk': vk, 'X': X}
         msk = {'sec':sec, 'sgk':sgk }
         return (mpk, msk)
 
@@ -61,7 +62,7 @@ class Nirvana():
         return { 'PRFkey': PRFkey, 'key': key, 'R':R, 'S':S, 'T':T, 'W':W }
 
     @Input(mpk_t, Col_t, pk_t, ZR, int, int)
-    @Output(ct_t,Rand_t,proof_t,proof_t,proof_t)
+    @Output(ct_t,Rand_t,proof_t,proof_t,proof_t,proof1_t)
     def Spending(self, mpk, Col, pk, time, d ,N):
         SAgg=1; TAgg=1; PRFkey=0; R=[]; X=[]; y2=1
         if len(Col['PRFkey']) >= d:
@@ -79,31 +80,34 @@ class Nirvana():
             Tprime = (TAgg ** (tprime**2))* (Col['W']**(d*tprime*(1-tprime)))
             Wprime = Col['W'] ** (1/tprime)
             r = mpk['g'] ** (1/(PRFkey+time))
-            ID = group.random(GT)
+            IDsk = group.random(ZR); ID= mpk['e_gh']**IDsk 
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
             (proof1) = PoK2.prover(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = PoK3.prover(y2,X,R) # Proof of Aggeragetd collatorals
             (proof3) = PoK2.prover(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
+            (proof4) = PoK1.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C1
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
             ct = {'C': C, 'C1': C1, 'R':R}
-            return (ct,Rand,proof1,proof2,proof3)
+            return (ct,Rand,proof1,proof2,proof3,proof4)
         else:
             return (print("You don't have enough money in your account"), None)
 
-    @Input(mpk_t, pk_t, Rand_t, ct_t, proof_t, proof_t, proof_t, int, list, ZR, int)
+    @Input(mpk_t, pk_t, Rand_t, ct_t, proof_t, proof_t, proof_t, proof1_t, int, list, ZR, int)
     @Output(list)
-    def Verification(self, mpk, pk, Rand, ct, proof1, proof2, proof3, d, Ledger, time, N):
+    def Verification(self, mpk, pk, Rand, ct, proof1, proof2, proof3, proof4, d, Ledger, time, N):
         LHS=1
         for i in range(len(ct['R'])):
             LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
-        if pair(Rand['Sprime'], Rand['Rprime'])==proof1['y'] * pair(mpk['X'],(mpk['h']**d)) and \
-            pair(Rand['Tprime'],Rand['Rprime'])==pair(Rand['Sprime'],mpk['vk'])* mpk['e_gh']**d and \
+        if pair(Rand['Sprime'], Rand['Rprime']) == proof1['y'] * mpk['e_Xh'] ** d and \
+            pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
                 LHS==proof2['y'] and \
+                    pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['y'] and \
                     pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['y'] and \
                     PoK2.verifier(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
                         PoK3.verifier(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
                             PoK2.verifier2(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
+                                PoK1.verifier2(ct['C'],mpk['e_gh'],proof4['y'],proof4['z1'],proof4['z2'],proof4['t'])==0 and \
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
                 return Ledger
@@ -115,11 +119,6 @@ class Nirvana():
     def Decryption(self, mpk, ct1, M1, ct2, M2): 
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))
-
-
-        
-
-        
 
 def start_bench(group):
     group.InitBenchmark()
@@ -187,20 +186,20 @@ def run_round_trip(n,d,M):
     Spending_time = 0; time=groupObj.hash(objectToBytes(str(datetime.now()), group),ZR)
     for i in range(1):
         start_bench(groupObj)
-        (ct1, Rand1,proof1,proof2,proof3) = Nir.Spending(mpk, Col, pk, time, d, 10)
+        (ct1, Rand1,proof1,proof2,proof3,proof4) = Nir.Spending(mpk, Col, pk, time, d, 10)
         Spending_time += end_bench(groupObj)
     Spending_time = Spending_time * 10
     result.append(Spending_time)
     Ciphertext_size = sum([len(x) for x in serializeDict(ct1, groupObj).values()]) + sum([len(x) for x in serializeDict(Rand1, groupObj).values()]) 
     result.append(Ciphertext_size)
-    (ct2, Rand2,p1,p2,p3) = Nir.Spending(mpk, Col, pk, time, d, 11)
+    (ct2, Rand2,p1,p2,p3,p4) = Nir.Spending(mpk, Col, pk, time, d, 11)
 
     # Verification 
     Verification_time = 0
     for i in range(1):
         start_bench(groupObj)
         Ledger=[]
-        out = Nir.Verification(mpk,pk,Rand1,ct1,proof1,proof2,proof3,d,Ledger,time,10)
+        out = Nir.Verification(mpk,pk,Rand1,ct1,proof1,proof2,proof3,proof4,d,Ledger,time,10)
         print(out)
         Verification_time += end_bench(groupObj)
     Verification_time = Verification_time * 10
