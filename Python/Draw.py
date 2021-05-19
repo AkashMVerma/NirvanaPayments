@@ -6,11 +6,11 @@ from openpyxl import load_workbook
 from openpyxl import Workbook
 book=Workbook()
 data=book.active
-dfrow = load_workbook(filename="Result1.xlsx",  data_only=True)
+dfrow = load_workbook(filename="Python/Result1.xlsx",  data_only=True)
 df = dfrow.active
 def col(c,df):
     col=[]
-    for i in range(2,22):
+    for i in range(2,31):
         col.append(df.cell(row=i,column=c).value)
     return col
 n=col(1,df)
@@ -25,8 +25,9 @@ Registrationtime=col(9,df)
 Collateralsize=col(10,df)
 Speendingtime=col(11,df)
 ciphertext=col(12,df)
-Verificationtime=col(13,df)
-decryptiontime=col(14,df)
+PPSpeendingtime=col(13,df)
+Verificationtime=col(14,df)
+decryptiontime=col(15,df)
 
 fig, ((ax4, ax0, ax1),(ax2, ax3, ax5)) = plt.subplots(nrows=2, ncols=3,
                                     figsize=(14, 8))
@@ -36,7 +37,7 @@ ax0.errorbar(n,Registrationtime,color='maroon', linestyle='dashed', linewidth = 
 ax0.grid()
 ax0.legend(loc=2,prop={'size': 12})
 ax0.set_xlabel('Number of Collaterals')
-ax0.set_ylabel('Time (sec)')
+ax0.set_ylabel('Time (ms)')
 
 #ax1.set_title('Collateral size')
 ax1.plot(n,Collateralsize,color='maroon', linestyle='dashed', linewidth = 2,
@@ -51,6 +52,8 @@ ax1.set_ylabel('Size (byte)')
 #ax2.set_title('Speending time')
 ax2.plot(d,Speendingtime,color='darkgreen', linestyle='dashed', linewidth = 2,
          marker='o', markerfacecolor='maroon', markersize=6,label='Spending time')
+ax2.plot(d,PPSpeendingtime,color='b', linestyle='dashed', linewidth = 2,
+         marker='o', markerfacecolor='r', markersize=6,label='Pre-Processed' + '\n' + 'Spending time')
 ax2.grid()
 ax2.legend(loc=2,prop={'size': 12})
 ax2.set_xlabel('Number of Collaterals')
@@ -63,8 +66,8 @@ ax3.errorbar(n,ciphertext,color='b', linestyle='dashed', linewidth = 2,
 ax3.grid()
 ax3.legend(loc=2,prop={'size': 12})
 ax3.set_xlabel('Number of Collatorals')
-ax3.set_ylabel('Size (byte)')
-#ax3.set_ylim([0,45])
+ax3.set_ylabel('Size (kbyte)')
+ax3.set_ylim([5.4,5.8])
 
 #ax4.set_title('Key Gen time')
 ax4.errorbar(M,keygentime,color='b', linestyle='dashed', linewidth = 2,
@@ -82,6 +85,6 @@ ax5.grid()
 ax5.legend(loc=2,prop={'size': 12})
 ax5.set_xlabel('Number of Collaterals')
 ax5.set_ylabel('Time (Sec)')
-#ax5.set_ylim([0,1500])
+ax5.set_ylim([0.1,0.5])
 plt.draw()
 plt.savefig("performance.pdf", bbox_inches='tight')
