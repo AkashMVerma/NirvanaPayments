@@ -6,7 +6,6 @@ from charm.core.engine.util import serializeDict,objectToBytes
 import random
 from datetime import datetime
 from openpyxl import load_workbook
-
 from openpyxl import Workbook
 from PoK import PoK1, PoK2, PoK3
 
@@ -61,9 +60,9 @@ class Nirvana():
         W = mpk['g']**(1/t)
         return { 'PRFkey': PRFkey, 'key': key, 'R':R, 'S':S, 'T':T, 'W':W }
 
-    @Input(mpk_t, Col_t, pk_t, ZR, int, int)
+    @Input(mpk_t, Col_t, pk_t, ZR, int, int, ZR, GT)
     @Output(ct_t,Rand_t,proof_t,proof_t,proof_t,proof1_t)
-    def Spending(self, mpk, Col, pk, time, d ,N):
+    def Spending(self, mpk, Col, pk, time, d ,N, IDsk,ID):
         SAgg=1; TAgg=1; PRFkey=0; R=[]; X=[]; y2=1
         if len(Col['PRFkey']) >= d:
             for i in range(d):
@@ -80,16 +79,15 @@ class Nirvana():
             Tprime = (TAgg ** (tprime**2))* (Col['W']**(d*tprime*(1-tprime)))
             Wprime = Col['W'] ** (1/tprime)
             r = mpk['g'] ** (1/(PRFkey+time))
-            IDsk = group.random(ZR); ID= mpk['e_gh']**IDsk 
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
             (proof1) = PoK2.prover(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = PoK3.prover(y2,X,R) # Proof of Aggeragetd collatorals
             (proof3) = PoK2.prover(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
-            (proof4) = PoK1.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C1
+            (proof4) = PoK1.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
-            ct = {'C': C, 'C1': C1, 'R':R}
-            return (ct,Rand,proof1,proof2,proof3,proof4)
+            ct = { 'C': C, 'C1': C1, 'R':R }
+            return (ct, Rand, proof1, proof2, proof3, proof4)
         else:
             return (print("You don't have enough money in your account"), None)
 
@@ -136,7 +134,7 @@ PoK1 = PoK1(groupObj)
 PoK2 = PoK2(groupObj)
 PoK3 = PoK3(groupObj)
 SSS = SecretShare(groupObj)
-Mer = ['Apple'] * 2001
+Mer = ['Apple','Ebay','Tesco','Amazon','Tesla','Colruyt','BMW','hp','Albert','IKEA'] * 201
 
 def run_round_trip(n,d,M):
     result=[n,d,M]
@@ -181,25 +179,25 @@ def run_round_trip(n,d,M):
     result.append(Collateral_size)
 
     # Spending
-    
-    #N = pk['Merlist'].index('Apple')
+    IDsk = group.random(ZR); ID= mpk['e_gh']**IDsk 
+    N = pk['Merlist'].index('Amazon')
     Spending_time = 0; time=groupObj.hash(objectToBytes(str(datetime.now()), group),ZR)
     for i in range(1):
         start_bench(groupObj)
-        (ct1, Rand1,proof1,proof2,proof3,proof4) = Nir.Spending(mpk, Col, pk, time, d, 10)
+        (ct1, Rand1,proof1,proof2,proof3,proof4) = Nir.Spending(mpk, Col, pk, time, d, N, IDsk, ID)
         Spending_time += end_bench(groupObj)
     Spending_time = Spending_time * 10
     result.append(Spending_time)
     Ciphertext_size = sum([len(x) for x in serializeDict(ct1, groupObj).values()]) + sum([len(x) for x in serializeDict(Rand1, groupObj).values()]) 
     result.append(Ciphertext_size)
-    (ct2, Rand2,p1,p2,p3,p4) = Nir.Spending(mpk, Col, pk, time, d, 11)
+    (ct2, Rand2,p1,p2,p3,p4) = Nir.Spending(mpk, Col, pk, time, d, N+1,IDsk,ID)
 
     # Verification 
     Verification_time = 0
     for i in range(1):
         start_bench(groupObj)
         Ledger=[]
-        out = Nir.Verification(mpk,pk,Rand1,ct1,proof1,proof2,proof3,proof4,d,Ledger,time,10)
+        out = Nir.Verification(mpk, pk, Rand1, ct1, proof1, proof2, proof3, proof4 , d, Ledger, time, N)
         print(out)
         Verification_time += end_bench(groupObj)
     Verification_time = Verification_time * 10

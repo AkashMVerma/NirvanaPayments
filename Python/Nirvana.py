@@ -6,7 +6,6 @@ from charm.core.engine.util import serializeDict,objectToBytes
 import random
 from datetime import datetime
 from openpyxl import load_workbook
-
 from openpyxl import Workbook
 from PoK import PoK1, PoK2, PoK3
 
@@ -61,9 +60,9 @@ class Nirvana():
         W = mpk['g']**(1/t)
         return { 'PRFkey': PRFkey, 'key': key, 'R':R, 'S':S, 'T':T, 'W':W }
 
-    @Input(mpk_t, Col_t, pk_t, ZR, int, int)
+    @Input(mpk_t, Col_t, pk_t, ZR, int, int, ZR, GT)
     @Output(ct_t,Rand_t,proof_t,proof_t,proof_t,proof1_t)
-    def Spending(self, mpk, Col, pk, time, d ,N):
+    def Spending(self, mpk, Col, pk, time, d ,N, IDsk,ID):
         SAgg=1; TAgg=1; PRFkey=0; R=[]; X=[]; y2=1
         if len(Col['PRFkey']) >= d:
             for i in range(d):
@@ -80,16 +79,15 @@ class Nirvana():
             Tprime = (TAgg ** (tprime**2))* (Col['W']**(d*tprime*(1-tprime)))
             Wprime = Col['W'] ** (1/tprime)
             r = mpk['g'] ** (1/(PRFkey+time))
-            IDsk = group.random(ZR); ID= mpk['e_gh']**IDsk 
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
             (proof1) = PoK2.prover(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = PoK3.prover(y2,X,R) # Proof of Aggeragetd collatorals
             (proof3) = PoK2.prover(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
-            (proof4) = PoK1.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C1
+            (proof4) = PoK1.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
-            ct = {'C': C, 'C1': C1, 'R':R}
-            return (ct,Rand,proof1,proof2,proof3,proof4)
+            ct = { 'C': C, 'C1': C1, 'R':R }
+            return (ct, Rand, proof1, proof2, proof3, proof4)
         else:
             return (print("You don't have enough money in your account"), None)
 
@@ -113,3 +111,9 @@ class Nirvana():
                 return Ledger
         else:
             return Ledger
+
+    @Input(mpk_t, ct_t, int, ct_t, int)
+    @Output(GT)
+    def Decryption(self, mpk, ct1, M1, ct2, M2): 
+        Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
+        return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))
