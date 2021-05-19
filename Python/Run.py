@@ -84,7 +84,7 @@ class Nirvana():
             C1 = pair(r, pk['pk'][N])
             (proof1) = PoK2.prover(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = PoK3.prover(y2,X,R) # Proof of Aggeragetd collatorals
-            (proof3) = PoK2.prover(mpk['g'],C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
+            (proof3) = PoK2.prover(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
             ct = {'C': C, 'C1': C1, 'R':R}
             return (ct,Rand,proof1,proof2,proof3)
@@ -100,10 +100,10 @@ class Nirvana():
         if pair(Rand['Sprime'], Rand['Rprime'])==proof1['y'] * pair(mpk['X'],(mpk['h']**d)) and \
             pair(Rand['Tprime'],Rand['Rprime'])==pair(Rand['Sprime'],mpk['vk'])* mpk['e_gh']**d and \
                 LHS==proof2['y'] and \
-                    mpk['e_gh'] * (ct['C1'] ** (-time)) != proof3['y'] and \
+                    pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['y'] and \
                     PoK2.verifier(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
                         PoK3.verifier(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
-                            PoK2.verifier(mpk['g'],proof3['y'],proof3['z'],proof3['t'],pk['pk'][N]) == 0 and \
+                            PoK2.verifier2(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
                 return Ledger
@@ -116,6 +116,8 @@ class Nirvana():
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))
 
+
+        
 
         
 
