@@ -5,12 +5,6 @@ class PoK():
     def __init__(self, groupObj):
         global util, group
         group = groupObj
-    # def prover1(self,g,y,x):
-    #     r = group.random(ZR)
-    #     t = g ** r
-    #     c = group.hash(objectToBytes(y, group)+objectToBytes(t, group),ZR)
-    #     z = c * x + r
-    #     return { 'z':z, 't':t, 'y':y }
     def prover1(self,g,y,x,u):
         r = group.random(ZR)
         t = pair(g,u) ** r

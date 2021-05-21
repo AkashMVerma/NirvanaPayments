@@ -112,7 +112,6 @@ class Customer():
             message_col = bytesToObject(message_col, groupObj)
             #print(f"Received collateral [ {message_col} ]")
             #message_col = {int(k):v for k in message_col.values()}
-            print(message_col)
         socket.close()
         return message_col
 
@@ -151,7 +150,7 @@ class Customer():
             (proof4) = self.PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
             ct = { 'C': C, 'C1': C1, 'R':R }
-            spend_proofs = (mpk, Rand, ct, proof1, proof2, proof3, proof4)
+            spend_proofs = (mpk, Rand, ct, proof1, proof2, proof3, proof4, time)
             spend_proofs = objectToBytes(spend_proofs, groupObj)
             socket_receiveProofReq.send(spend_proofs)
         #(ct1, Rand1,proof1,proof2,proof3,proof4) = Nir.Spending(mpk, Col, pk_message, time, d, N, IDsk, ID)
@@ -168,7 +167,6 @@ class Customer():
         # socket_receiveProofReq.send_multipart(proof2, zmq.SNDMORE)
         # socket_receiveProofReq.send_multipart(proof3, zmq.SNDMORE)
         # socket_receiveProofReq.send_multipart(proof4)
-
         socket_receiveProofReq.close()
     # print("Connecting to NirvanaTTP")
     # socket = context.socket(zmq.REQ)

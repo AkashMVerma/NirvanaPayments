@@ -2,7 +2,7 @@ from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
 from charm.toolbox.ABEnc import Input, Output
 from secretshare import SecretShare
-from charm.core.engine.util import serializeDict,objectToBytes, bytesToObject
+from charm.core.engine.util import serializeDict,objectToBytes, bytesToObject, deserializeDict
 import random
 import time
 import zmq
@@ -81,16 +81,31 @@ class Merchant():
         print("Received proof is ...")
         received_proof =  socket_receiveProof.recv()
         received_proof = bytesToObject(received_proof, groupObj)
-        # master_public_key = received_proof[0]
-        # #print(type(master_public_key))
-        # payment_cipher_text = received_proof[1]
-        # randomization_stuff = received_proof[2]
-        # proof1_stuff = received_proof[3]
-        # proof2_stuff = received_proof[4]
-        # proof3_stuff = received_proof[5]
-        # proof4_stuff = received_proof[6]
-
+        #print(received_proof)
         return received_proof
+        # LHS=1
+        # print(range(len(ct['R'])))
+        # for i in range(len(ct['R'])):
+        #     print(ct['R'][i])
+        #     LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
+        # if pair(Rand['Sprime'], Rand['Rprime']) == proof1['p1y'] * mpk['e_Xh'] ** d and \
+        #     pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
+        #         LHS==proof2['p4y'] and \
+        #             pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['p2y'] and \
+        #             pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
+        #             PoK.verifier3(mpk['g'],proof1['p1y'],proof1['p1z'],proof1['p1t'],mpk['vk']) == 1 and \
+        #                 PoK.verifier5(proof2['p4y'],proof2['p4z'],proof2['p4t'],ct['R']) == 1 and \
+        #                     PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],pk['pk'][N]) == 1 and \
+        #                         PoK.verifier2(ct['C'],mpk['e_gh'],proof4['p2y'],proof4['p2z1'],proof4['p2z2'],proof4['p2t'])==0 and \
+        #                         ct['R'] not in Ledger:
+        #         Ledger.append(ct['R'])
+        #         print("works")
+        #         return Ledger
+        # else:
+        #     print("doesnt work")
+        #     return Ledger
+
+        
 
 
 
@@ -99,24 +114,23 @@ class Merchant():
     @Output(list)
     def Verification(self, mpk, Rand, ct, proof1, proof2, proof3, proof4, mer_pk, d, Ledger, time):
         LHS=1
-        print("im here")
         for i in range(len(ct['R'])):
             LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
-        if pair(Rand['Sprime'], Rand['Rprime']) == proof1['y'] * mpk['e_Xh'] ** d and \
+        if pair(Rand['Sprime'], Rand['Rprime']) == proof1['p1y'] * mpk['e_Xh'] ** d and \
             pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
-                LHS==proof2['y'] and \
-                    pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['y'] and \
-                    pair(mpk['g'],mer_pk) * (ct['C1'] ** (-time)) == proof3['y'] and \
-                    PoK.verifier3(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
-                        PoK.verifier4(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
-                            PoK.verifier3(proof3['y'],proof3['z'],proof3['t'],ct['C1'],mer_pk) == 1 and \
-                                PoK.verifier2(ct['C'],mpk['e_gh'],proof4['y'],proof4['z1'],proof4['z2'],proof4['t'])==0 and \
+                LHS==proof2['p4y'] and \
+                    pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['p2y'] and \
+                    pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
+                    PoK.verifier3(mpk['g'],proof1['p1y'],proof1['p1z'],proof1['p1t'],mpk['vk']) == 1 and \
+                        PoK.verifier5(proof2['p4y'],proof2['p4z'],proof2['p4t'],ct['R']) == 1 and \
+                            PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],pk['pk'][N]) == 1 and \
+                                PoK.verifier2(ct['C'],mpk['e_gh'],proof4['p2y'],proof4['p2z1'],proof4['p2z2'],proof4['p2t'])==0 and \
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
+                print("works")
                 return Ledger
-                print("comm works")
         else:
-            print("comm doesnt work")
+            print("doesnt work")
             return Ledger
 
     @Input(mpk_t, ct_t, int, ct_t, int)
@@ -125,17 +139,18 @@ class Merchant():
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))
 
-groupObj = PairingGroup('BN254')    
-time=groupObj.hash(objectToBytes(str(datetime.now()), groupObj),ZR)
-m = Merchant()
-#m.request_pp()
-m.request_pk()
-#c.request_pp()
-#c.request_col()
-output_proof = m.request_proof()
-print(output_proof)
-m.Verification(output_proof[0], output_proof[1], output_proof[2], output_proof[3], output_proof[4], output_proof[5], output_proof[6], 1, [], time)
+# groupObj = PairingGroup('BN254')    
 
+m = Merchant()
+# #m.request_pp()
+m.request_pk()
+# #c.request_pp()
+# #c.request_col()
+output_proof = m.request_proof()
+# #print(output_proof)
+#
+#@Input(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, G2, int, list, ZR)
+m.Verification(output_proof[0], output_proof[1], output_proof[2], output_proof[3], output_proof[4], output_proof[5], output_proof[6], 1, [], output_proof[7])
 
 
     
