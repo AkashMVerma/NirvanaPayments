@@ -113,9 +113,9 @@ class Nirvana():
     #         return (ct, proof1, proof2, proof3, proof4)
     #     else:
     #         return (print("You don't have enough money in your account"), None)
-    @Input(mpk_t, pk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, int, list, ZR, int)
+    @Input(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, G2, int, list, ZR)
     @Output(list)
-    def Verification(self, mpk, pk, Rand, ct, proof1, proof2, proof3, proof4, d, Ledger, time, N):
+    def Verification(self, mpk, Rand, ct, proof1, proof2, proof3, proof4, mer_pk, d, Ledger, time):
         LHS=1
         for i in range(len(ct['R'])):
             LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
@@ -123,10 +123,10 @@ class Nirvana():
             pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
                 LHS==proof2['p4y'] and \
                     pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['p2y'] and \
-                    pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
+                    pair(mpk['g'],mer_pk) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
                     PoK.verifier3(mpk['g'],proof1['p1y'],proof1['p1z'],proof1['p1t'],mpk['vk']) == 1 and \
                         PoK.verifier5(proof2['p4y'],proof2['p4z'],proof2['p4t'],ct['R']) == 1 and \
-                            PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],pk['pk'][N]) == 1 and \
+                            PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],mer_pk) == 1 and \
                                 PoK.verifier2(ct['C'],mpk['e_gh'],proof4['p2y'],proof4['p2z1'],proof4['p2z2'],proof4['p2t'])==0 and \
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
@@ -240,6 +240,8 @@ def run_round_trip(n,d,M):
     # Verification 
     Verification_time = 0
     spend_proof = bytesToObject(spend_proof, groupObj)
+    N = pk['Merlist'].index('Amazon')
+    mer_pk = pk['pk'][N]
     for i in range(10):
         start_bench(groupObj)
         Ledger=[]
@@ -253,7 +255,7 @@ def run_round_trip(n,d,M):
         proof3st = spend_proof[5]
         proof4st = spend_proof[6]
         timest = spend_proof[7]
-        out = Nir.Verification(mpkst, pk, randomstr, ct1st, proof1st, proof2st, proof3st, proof4st, d, Ledger, timest, N)
+        out = Nir.Verification(mpkst, randomstr, ct1st, proof1st, proof2st, proof3st, proof4st, mer_pk, d, Ledger, timest)
         Verification_time += end_bench(groupObj)
     Verification_time = Verification_time /10
     #print(out)

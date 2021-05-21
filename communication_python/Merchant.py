@@ -57,6 +57,7 @@ class Merchant():
         socket_pull.close()
         return mpk
 
+    @Output(G2)
     def request_pk(self):
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting public key...")
@@ -70,6 +71,7 @@ class Merchant():
         self.merchant_public_key = groupObj.deserialize(self.message_pk)
         print(f"Received public key [ {self.merchant_public_key} ]")
         socket.close()
+        return self.merchant_public_key
     @Output(mpk_t, Rand_t, ct_t, Rand_t, proof1_t, proof4_t, proof3_t, proof2_t)
     def request_proof(self):
         print("Connecting to customer, requesting proofs and ciphertext...")
@@ -80,7 +82,7 @@ class Merchant():
         #time.sleep(0.2)
         print("Received proof is ...")
         received_proof =  socket_receiveProof.recv()
-        received_proof = bytesToObject(received_proof, groupObj)
+        #received_proof = bytesToObject(received_proof, groupObj)
         #print(received_proof)
         return received_proof
         # LHS=1
@@ -120,18 +122,19 @@ class Merchant():
             pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
                 LHS==proof2['p4y'] and \
                     pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['p2y'] and \
-                    pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
+                    pair(mpk['g'],mer_pk) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
                     PoK.verifier3(mpk['g'],proof1['p1y'],proof1['p1z'],proof1['p1t'],mpk['vk']) == 1 and \
                         PoK.verifier5(proof2['p4y'],proof2['p4z'],proof2['p4t'],ct['R']) == 1 and \
-                            PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],pk['pk'][N]) == 1 and \
+                            PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],mer_pk) == 1 and \
                                 PoK.verifier2(ct['C'],mpk['e_gh'],proof4['p2y'],proof4['p2z1'],proof4['p2z2'],proof4['p2t'])==0 and \
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
-                print("works")
+                print("passed")
                 return Ledger
         else:
-            print("doesnt work")
+            print("not passed")
             return Ledger
+
 
     @Input(mpk_t, ct_t, int, ct_t, int)
     @Output(GT)
@@ -143,14 +146,24 @@ class Merchant():
 
 m = Merchant()
 # #m.request_pp()
-m.request_pk()
+mer_pk = m.request_pk()
 # #c.request_pp()
 # #c.request_col()
-output_proof = m.request_proof()
+spend_proof = m.request_proof()
+spend_proof = bytesToObject(spend_proof, groupObj)
 # #print(output_proof)
 #
 #@Input(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, G2, int, list, ZR)
-m.Verification(output_proof[0], output_proof[1], output_proof[2], output_proof[3], output_proof[4], output_proof[5], output_proof[6], 1, [], output_proof[7])
+mpkst = spend_proof[0]
+randomstr = spend_proof[2]
+ct1st = spend_proof[1]
+proof1st = spend_proof[3]
+proof2st = spend_proof[4]
+proof3st = spend_proof[5]
+proof4st = spend_proof[6]
+timest = spend_proof[7]
+out = m.Verification(mpkst, randomstr, ct1st, proof1st, proof2st, proof3st, proof4st, mer_pk, 1, [], timest)
+
 
 
     
