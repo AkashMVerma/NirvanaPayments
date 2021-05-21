@@ -36,6 +36,7 @@ def run_round_trip(n,d,M):
     Key_Gen_time=0
     for i in range(1):
         start_bench(groupObj)
+        
         (pk,sk) = Nir.Keygen(mpk, msk, Merchants)
         Key_Gen_time += end_bench(groupObj)
     Key_Gen_time = Key_Gen_time * 10

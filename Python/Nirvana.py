@@ -81,7 +81,7 @@ class Nirvana():
             r = mpk['g'] ** (1/(PRFkey+time))
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
-            (proof1) = PoK.prover3(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
+            (proof1) = PoK.prover1(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = PoK.prover4(y2,X,R) # Proof of Aggeragetd collatorals
             (proof3) = PoK.prover3(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
             (proof4) = PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
@@ -103,7 +103,7 @@ class Nirvana():
             r = mpk['g'] ** (1/(PRFkey+time))
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
-            (proof1) = PoK.prover3(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
+            (proof1) = PoK.prover1(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = PoK.prover4(y2,X,R) # Proof of Aggeragetd collatorals
             (proof3) = PoK.prover3(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
             (proof4) = PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0

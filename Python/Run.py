@@ -240,6 +240,7 @@ def run_round_trip(n,d,M):
         out = Nir.Verification(mpk, pk, Rand1, ct1, proof1, proof2, proof3, proof4 , d, Ledger, time, N)
         Verification_time += end_bench(groupObj)
     Verification_time = Verification_time /10
+    print(out)
     result.append(Verification_time) 
     #(out2)= Nir.Verification(mpk,ct2,Rand2)
 
@@ -259,7 +260,7 @@ book=Workbook()
 data=book.active
 title=["n","d","M","setup_time","public_parameters_size", "Key_Gen_time","public_key_size","secret_key_size","Registeration_time","Collateral_size","Spending_time","Ciphertext_size","PPSpending_time","Verification_time","Decryption_time"]
 data.append(title)
-for n in range(1,41):
+for n in range(1,3):
     data.append(run_round_trip(n,n,50*n))
     print(n)
 book.save("Result1.xlsx")
