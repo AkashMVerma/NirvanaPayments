@@ -19,8 +19,10 @@ sk_t = { 'shares': ZR }
 Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
 Rand_t = {'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
 ct_t = { 'C':GT, 'C1':GT, 'R':GT}
-proof_t = {'z': ZR, 't': GT, 'y': GT}
-proof1_t = {'z1': ZR, 'z2': ZR, 't': GT, 'y': GT}
+proof1_t = {'p1z': ZR, 'p1t': GT, 'p1y': GT}
+proof4_t = {'p4z': ZR, 'p4t': GT, 'p4y': GT}
+proof3_t = {'p3z': ZR, 'p3t': GT, 'p3y': GT}
+proof2_t = {'p2z1': ZR, 'p2z2': ZR, 'p2t': GT, 'p2y': GT}
 prf_t= {'H':G1, 't':G1, 'c':ZR, 'r':ZR}
 
 
@@ -83,6 +85,7 @@ class Customer():
 
     #socks = dict(poller.poll())
     #if socket_pull in socks:
+    @Output(mpk_t)
     def request_pp(self):
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting parameters...")
@@ -95,7 +98,7 @@ class Customer():
         socket_pull.close()
         return mpk
     
-
+    @Output(Col_t)
     def request_col(self): 
         print("Connecting to NirvanaTTP, requesting collateral proof...")
         socket = self.context.socket(zmq.REQ)
@@ -113,6 +116,7 @@ class Customer():
         socket.close()
         return message_col
 
+    @Input(mpk_t, Col_t, int)
     def spend_col(self, mpk, Col, d):
         socket_receiveProofReq = self.context.socket(zmq.REP)
         socket_receiveProofReq.bind("tcp://10.0.2.15:5550")
@@ -147,7 +151,7 @@ class Customer():
             (proof4) = self.PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
             ct = { 'C': C, 'C1': C1, 'R':R }
-            spend_proofs = (mpk, ct, Rand, proof1, proof2, proof3, proof4)
+            spend_proofs = (mpk, Rand, ct, proof1, proof2, proof3, proof4)
             spend_proofs = objectToBytes(spend_proofs, groupObj)
             socket_receiveProofReq.send(spend_proofs)
         #(ct1, Rand1,proof1,proof2,proof3,proof4) = Nir.Spending(mpk, Col, pk_message, time, d, N, IDsk, ID)

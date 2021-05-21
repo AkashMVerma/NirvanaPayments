@@ -19,8 +19,10 @@ sk_t = { 'shares': ZR }
 Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
 Rand_t = {'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
 ct_t = { 'C':GT, 'C1':GT, 'R':GT}
-proof_t = {'z': ZR, 't': GT, 'y': GT}
-proof1_t = {'z1': ZR, 'z2': ZR, 't': GT, 'y': GT}
+proof1_t = {'p1z': ZR, 'p1t': GT, 'p1y': GT}
+proof4_t = {'p4z': ZR, 'p4t': GT, 'p4y': GT}
+proof3_t = {'p3z': ZR, 'p3t': GT, 'p3y': GT}
+proof2_t = {'p2z1': ZR, 'p2z2': ZR, 'p2t': GT, 'p2y': GT}
 prf_t= {'H':G1, 't':G1, 'c':ZR, 'r':ZR}
 
 
@@ -42,7 +44,7 @@ class Merchant():
     # poller.register(socket, zmq.POLLIN)
     # poller.register(socket_pull, zmq.POLLIN)
 
-
+    @Output(mpk_t)
     def request_pp(self):
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting parameters...")
@@ -68,7 +70,7 @@ class Merchant():
         self.merchant_public_key = groupObj.deserialize(self.message_pk)
         print(f"Received public key [ {self.merchant_public_key} ]")
         socket.close()
-    
+    @Output(mpk_t, Rand_t, ct_t, Rand_t, proof1_t, proof4_t, proof3_t, proof2_t)
     def request_proof(self):
         print("Connecting to customer, requesting proofs and ciphertext...")
         socket_receiveProof = self.context.socket(zmq.REQ)
@@ -79,21 +81,21 @@ class Merchant():
         print("Received proof is ...")
         received_proof =  socket_receiveProof.recv()
         received_proof = bytesToObject(received_proof, groupObj)
-        master_public_key = received_proof[0]
-        print(type(master_public_key))
-        payment_cipher_text = received_proof[1]
-        randomization_stuff = received_proof[2]
-        proof1_stuff = received_proof[3]
-        proof2_stuff = received_proof[4]
-        proof3_stuff = received_proof[5]
-        proof4_stuff = received_proof[6]
+        # master_public_key = received_proof[0]
+        # #print(type(master_public_key))
+        # payment_cipher_text = received_proof[1]
+        # randomization_stuff = received_proof[2]
+        # proof1_stuff = received_proof[3]
+        # proof2_stuff = received_proof[4]
+        # proof3_stuff = received_proof[5]
+        # proof4_stuff = received_proof[6]
 
-        return master_public_key, randomization_stuff, payment_cipher_text, proof1_stuff, proof2_stuff, proof3_stuff, proof4_stuff, self.merchant_public_key
-
-
+        return received_proof
 
 
-    @Input(mpk_t, Rand_t, ct_t, proof_t, proof_t, proof_t, proof1_t, G2, int, list, ZR)
+
+
+    @Input(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, G2, int, list, ZR)
     @Output(list)
     def Verification(self, mpk, Rand, ct, proof1, proof2, proof3, proof4, mer_pk, d, Ledger, time):
         LHS=1
@@ -112,7 +114,9 @@ class Merchant():
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
                 return Ledger
+                print("comm works")
         else:
+            print("comm doesnt work")
             return Ledger
 
     @Input(mpk_t, ct_t, int, ct_t, int)
@@ -128,7 +132,9 @@ m = Merchant()
 m.request_pk()
 #c.request_pp()
 #c.request_col()
-m.Verification(m.request_proof(), 1, [], time)
+output_proof = m.request_proof()
+print(output_proof)
+m.Verification(output_proof[0], output_proof[1], output_proof[2], output_proof[3], output_proof[4], output_proof[5], output_proof[6], 1, [], time)
 
 
 
