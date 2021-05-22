@@ -119,7 +119,6 @@ class Merchant():
     @Output(list)
     def Verification(self, mpk, Rand, ct, proof1, proof2, proof3, proof4, mer_pk, d, Ledger, time):
         LHS=1
-        print(mpk)
         for i in range(len(ct['R'])):
             LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
         if pair(Rand['Sprime'], Rand['Rprime']) == proof1['p1y'] * mpk['e_Xh'] ** d and \
@@ -127,10 +126,10 @@ class Merchant():
                 LHS!=proof2['p4y'] and \
                     pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['p2y'] and \
                     pair(mpk['g'],mer_pk) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
-                    PoK.verifier3(mpk['g'],proof1['p1y'],proof1['p1z'],proof1['p1t'],mpk['vk']) == 1 and \
-                        PoK.verifier5(proof2['p4y'],proof2['p4z'],proof2['p4t'],ct['R']) == 1 and \
-                            PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],mer_pk) == 1 and \
-                                PoK.verifier2(ct['C'],mpk['e_gh'],proof4['p2y'],proof4['p2z1'],proof4['p2z2'],proof4['p2t'])==0 and \
+                    self.PoK.verifier3(mpk['g'],proof1['p1y'],proof1['p1z'],proof1['p1t'],mpk['vk']) == 1 and \
+                        self.PoK.verifier5(proof2['p4y'],proof2['p4z'],proof2['p4t'],ct['R']) == 1 and \
+                            self.PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],mer_pk) == 1 and \
+                                self.PoK.verifier2(ct['C'],mpk['e_gh'],proof4['p2y'],proof4['p2z1'],proof4['p2z2'],proof4['p2t'])==0 and \
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
                 print("passed")
