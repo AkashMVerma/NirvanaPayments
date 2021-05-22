@@ -27,6 +27,7 @@ Speendingtime=col(11,df)
 ciphertext=col(12,df)
 PPSpeendingtime=col(13,df)
 Verificationtime=col(14,df)
+PPVerificationtime=col(16,df)
 decryptiontime=col(15,df)
 
 fig, ((ax4, ax0, ax1),(ax2, ax3, ax5)) = plt.subplots(nrows=2, ncols=3,
@@ -79,7 +80,7 @@ ax4.set_ylabel('Time (ms)')
 #ax4.set_ylim([0,7])
 
 #ax5.set_title('Verification time')
-ax5.errorbar(n,Verificationtime,color='b', linestyle='dashed', linewidth = 2,
+ax5.errorbar(d,Verificationtime,color='b', linestyle='dashed', linewidth = 2,
          marker='o', markerfacecolor='g', markersize=6,label='Verification time')
 ax5.grid()
 ax5.legend(loc=2,prop={'size': 12})

@@ -111,17 +111,17 @@ class Nirvana():
             return (ct, proof1, proof2, proof3, proof4)
         else:
             return (print("You don't have enough money in your account"), None)
-    @Input(mpk_t, pk_t, Rand_t, ct_t, proof_t, proof_t, proof_t, proof1_t, int, list, ZR, int)
+    @Input(mpk_t, pk_t, Rand_t, GT, GT ct_t, proof_t, proof_t, proof_t, proof1_t, int, list, ZR, int)
     @Output(list)
-    def Verification(self, mpk, pk, Rand, ct, proof1, proof2, proof3, proof4, d, Ledger, time, N):
+    def Verification(self, mpk, pk, Rand, L1, L2, ct, proof1, proof2, proof3, proof4, d, Ledger, time, N):
         LHS=1
         for i in range(len(ct['R'])):
             LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
         if pair(Rand['Sprime'], Rand['Rprime']) == proof1['y'] * mpk['e_Xh'] ** d and \
             pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
                 LHS==proof2['y'] and \
-                    pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['y'] and \
-                    pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['y'] and \
+                    L1 * (ct['C']**(-time)) == proof4['y'] and \
+                    L2 * (ct['C1'] ** (-time)) == proof3['y'] and \
                     PoK.verifier3(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
                         PoK.verifier5(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
                             PoK.verifier4(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
@@ -138,3 +138,5 @@ class Nirvana():
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))
 
+L1=pair(mpk['g'],mpk['pp']) 
+L2=pair(mpk['g'],pk['pk'][N])

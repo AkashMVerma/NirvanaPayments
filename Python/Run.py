@@ -111,17 +111,17 @@ class Nirvana():
             return (ct, proof1, proof2, proof3, proof4)
         else:
             return (print("You don't have enough money in your account"), None)
-    @Input(mpk_t, pk_t, Rand_t, ct_t, proof_t, proof_t, proof_t, proof1_t, int, list, ZR, int)
+    @Input(mpk_t, pk_t, Rand_t, GT, GT, ct_t, proof_t, proof_t, proof_t, proof1_t, int, list, ZR, int)
     @Output(list)
-    def Verification(self, mpk, pk, Rand, ct, proof1, proof2, proof3, proof4, d, Ledger, time, N):
+    def Verification(self, mpk, pk, Rand, L1, L2, ct, proof1, proof2, proof3, proof4, d, Ledger, time, N):
         LHS=1
         for i in range(len(ct['R'])):
             LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
         if pair(Rand['Sprime'], Rand['Rprime']) == proof1['y'] * mpk['e_Xh'] ** d and \
             pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
                 LHS==proof2['y'] and \
-                    pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['y'] and \
-                    pair(mpk['g'],pk['pk'][N]) * (ct['C1'] ** (-time)) == proof3['y'] and \
+                    L1 * (ct['C']**(-time)) == proof4['y'] and \
+                    L2 * (ct['C1'] ** (-time)) == proof3['y'] and \
                     PoK.verifier3(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
                         PoK.verifier5(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
                             PoK.verifier4(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
@@ -171,11 +171,11 @@ def run_round_trip(n,d,M):
     # Key Gen
     Merchants = random.sample(Mer, M)
     Key_Gen_time=0
-    for i in range(10):
+    for i in range(1):
         start_bench(groupObj)
         (pk,sk) = Nir.Keygen(mpk, msk, Merchants)
         Key_Gen_time += end_bench(groupObj)
-    Key_Gen_time = Key_Gen_time * 100
+    Key_Gen_time = Key_Gen_time * 1000
     public_key_size = sum([len(x) for x in serializeDict(pk, groupObj).values()]) 
     secret_key_size = sum([len(x) for x in serializeDict(sk, groupObj).values()]) 
     secret_key_size = secret_key_size /10
@@ -201,11 +201,11 @@ def run_round_trip(n,d,M):
     IDsk = group.random(ZR); ID= mpk['e_gh']**IDsk 
     N = pk['Merlist'].index('Amazon')
     Spending_time = 0; time=groupObj.hash(objectToBytes(str(datetime.now()), group),ZR)
-    for i in range(10):
+    for i in range(1):
         start_bench(groupObj)
         (ct1, Rand1,proof1,proof2,proof3,proof4) = Nir.Spending(mpk, Col, pk, time, d, N, IDsk, ID)
         Spending_time += end_bench(groupObj)
-    Spending_time = Spending_time /10
+    Spending_time = Spending_time 
     result.append(Spending_time)
     Ciphertext_size = sum([len(x) for x in serializeDict(ct1, groupObj).values()]) + sum([len(x) for x in serializeDict(Rand1, groupObj).values()]) + sum([len(x) for x in serializeDict(proof1, groupObj).values()]) + sum([len(x) for x in serializeDict(proof2, groupObj).values()]) + sum([len(x) for x in serializeDict(proof3, groupObj).values()]) + sum([len(x) for x in serializeDict(proof4, groupObj).values()]) 
     result.append(Ciphertext_size/1000)
@@ -226,18 +226,22 @@ def run_round_trip(n,d,M):
     Wprime = Col['W'] ** (1/tprime)
     Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
     PPSpending_time = 0; time=groupObj.hash(objectToBytes(str(datetime.now()), group),ZR)
-    for i in range(10):
+    for i in range(1):
         start_bench(groupObj)
         (ct1, proof1, proof2, proof3, proof4) = Nir.PPSpending(mpk, Col, pk, time, d, N, IDsk, ID,PRFkey,X,A)
         PPSpending_time += end_bench(groupObj)
-    PPSpending_time = PPSpending_time /10
+    PPSpending_time = PPSpending_time
     result.append(PPSpending_time)
+
     # Verification 
     Verification_time = 0
+    L1=pair(mpk['g'],mpk['pp']) 
+    L2=pair(mpk['g'],pk['pk'][N])
     for i in range(10):
         start_bench(groupObj)
         Ledger=[]
-        out = Nir.Verification(mpk, pk, Rand1, ct1, proof1, proof2, proof3, proof4 , d, Ledger, time, N)
+        out = Nir.Verification(mpk, pk, Rand1, L1, L2, ct1, proof1, proof2, proof3, proof4 , d, Ledger, time, N)
+        #print(out)
         Verification_time += end_bench(groupObj)
     Verification_time = Verification_time /10
     result.append(Verification_time) 
@@ -259,7 +263,7 @@ book=Workbook()
 data=book.active
 title=["n","d","M","setup_time","public_parameters_size", "Key_Gen_time","public_key_size","secret_key_size","Registeration_time","Collateral_size","Spending_time","Ciphertext_size","PPSpending_time","Verification_time","Decryption_time"]
 data.append(title)
-for n in range(1,41):
+for n in range(1,40):
     data.append(run_round_trip(n,n,50*n))
     print(n)
 book.save("Result1.xlsx")
