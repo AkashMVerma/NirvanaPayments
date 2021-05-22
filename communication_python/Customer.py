@@ -131,10 +131,9 @@ class Customer():
             for i in range(d):
                 SAgg *= Col['S'][str(i)]
                 TAgg *= Col['T'][str(i)]
-                valPRF = Col['PRFkey'][str(i)]
-                PRFkey += valPRF
-                R.append(mpk['e_gh'] ** (1/valPRF+time))
-                X.append(valPRF)
+                PRFkey += Col['PRFkey'][str(i)]
+                R.append(mpk['e_gh'] ** (1/(Col['PRFkey'][str(i)]+time)))
+                X.append(Col['PRFkey'][str(i)])
                 y2 *= R[i] ** X[i]
                 A = pair(mpk['g'],mpk['vk']) ** PRFkey
             tprime = groupObj.random(ZR)
