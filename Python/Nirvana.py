@@ -111,7 +111,7 @@ class Nirvana():
             return (ct, proof1, proof2, proof3, proof4)
         else:
             return (print("You don't have enough money in your account"), None)
-    @Input(mpk_t, pk_t, Rand_t, GT, GT ct_t, proof_t, proof_t, proof_t, proof1_t, int, list, ZR, int)
+    @Input(mpk_t, pk_t, Rand_t, GT, GT, ct_t, proof_t, proof_t, proof_t, proof1_t, int, list, ZR, int)
     @Output(list)
     def Verification(self, mpk, pk, Rand, L1, L2, ct, proof1, proof2, proof3, proof4, d, Ledger, time, N):
         LHS=1
