@@ -103,11 +103,12 @@ class Nirvana():
             r = mpk['g'] ** (1/(PRFkey+time))
             C = ID * (pair(r, mpk['pp']))
             C1 = pair(r, pk['pk'][N])
+            u = mpk['e_gh'] ** (PRFkey * IDsk)
             (proof1) = PoK.prover3(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = PoK.prover4(y2,X,R) # Proof of Aggeragetd collatorals
             (proof3) = PoK.prover3(r,C1**PRFkey,PRFkey,pk['pk'][N]) #Proof of ciphertext C1
             (proof4) = PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
-            ct = { 'C': C, 'C1': C1, 'R':R }
+            ct = { 'C': C, 'C1': C1, 'R':R, 'u':u }
             return (ct, proof1, proof2, proof3, proof4)
         else:
             return (print("You don't have enough money in your account"), None)
@@ -125,7 +126,7 @@ class Nirvana():
                     PoK.verifier3(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
                         PoK.verifier5(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
                             PoK.verifier4(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
-                                PoK.verifier2(ct['C'],mpk['e_gh'],proof4['y'],proof4['z1'],proof4['z2'],proof4['t'])==0 and \
+                                PoK.verifier2(ct['C'],mpk['e_gh'],proof4['y'],proof4['z1'],proof4['z2'],proof4['t'],ct['u'])==1 and \
                                 ct['R'] not in Ledger:
                 Ledger.append(ct['R'])
                 return Ledger
@@ -264,7 +265,7 @@ book=Workbook()
 data=book.active
 title=["n","d","M","setup_time","public_parameters_size", "Key_Gen_time","public_key_size","secret_key_size","Registeration_time","Collateral_size","Spending_time","Ciphertext_size","PPSpending_time","Verification_time","Decryption_time"]
 data.append(title)
-for n in range(1,40):
+for n in range(1,2):
     data.append(run_round_trip(n,n,50*n))
     print(n)
 book.save("Result1.xlsx")

@@ -40,9 +40,9 @@ class PoK():
             return 1
         else:
             return 0
-    def verifier2(self, Ct, g, y, z1, z2, t):
+    def verifier2(self, Ct, g, y, z1, z2, t, u):
         c = group.hash(objectToBytes(y, group)+objectToBytes(t, group),ZR)
-        if (y**c) * t == (Ct ** z1) * (g ** z2):
+        if (y**c) * (u ** c) * t == (Ct ** z1) * (g ** z2):
             return 1
         else:
             return 0
