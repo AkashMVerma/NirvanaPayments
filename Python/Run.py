@@ -264,11 +264,7 @@ book=Workbook()
 data=book.active
 title=["n","d","M","setup_time","public_parameters_size", "Key_Gen_time","public_key_size","secret_key_size","Registeration_time","Collateral_size","Spending_time","Ciphertext_size","PPSpending_time","Verification_time","Decryption_time"]
 data.append(title)
-<<<<<<< HEAD
 for n in range(1,40):
-=======
-for n in range(1,3):
->>>>>>> c15b013c885bd0f459c43cb405420b94c4d265f7
     data.append(run_round_trip(n,n,50*n))
     print(n)
 book.save("Result1.xlsx")

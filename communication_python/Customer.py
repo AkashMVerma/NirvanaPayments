@@ -125,6 +125,7 @@ class Customer():
         pk_message = socket_receiveProofReq.recv()
         pk_message = groupObj.deserialize(pk_message)
         time=groupObj.hash(objectToBytes(str(datetime.now()), groupObj),ZR)
+        print(time)
         SAgg=1; TAgg=1; PRFkey=0; R=[]; X=[]; y2=1
         if len(Col['PRFkey']) >= d:
             for i in range(d):
@@ -150,9 +151,9 @@ class Customer():
             (proof4) = self.PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
             Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
             ct = { 'C': C, 'C1': C1, 'R':R }
-            spend_proofs = (mpk, Rand, ct, proof1, proof2, proof3, proof4, time)
-            spend_proofs = objectToBytes(spend_proofs, groupObj)
-            socket_receiveProofReq.send(spend_proofs)
+            spend_proof = (mpk, Rand, ct, proof1, proof2, proof3, proof4, time)
+            spend_proof = objectToBytes(spend_proof, groupObj)
+            socket_receiveProofReq.send(spend_proof)
         #(ct1, Rand1,proof1,proof2,proof3,proof4) = Nir.Spending(mpk, Col, pk_message, time, d, N, IDsk, ID)
         # ct1= serializeDict(ct, groupObj)
         # Rand1= objectToBytes(Rand, groupObj)

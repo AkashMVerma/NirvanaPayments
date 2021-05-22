@@ -66,22 +66,25 @@ class Merchant():
         print(f"Sending request for public key ...")
         socket.send_string("Apple")
 
-        self.message_pk = socket.recv()
+        message_pk = socket.recv()
         #message = message.decode('utf-8')
-        self.merchant_public_key = groupObj.deserialize(self.message_pk)
-        print(f"Received public key [ {self.merchant_public_key} ]")
+        merchant_public_key = bytesToObject(message_pk, groupObj)
+        print(f"Received public key [ {merchant_public_key} ]")
         socket.close()
-        return self.merchant_public_key
-    @Output(mpk_t, Rand_t, ct_t, Rand_t, proof1_t, proof4_t, proof3_t, proof2_t)
-    def request_proof(self):
+        return merchant_public_key
+
+    @Input(G2)
+    @Output(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, ZR)
+    def request_proof(self, merchant_public_key):
         print("Connecting to customer, requesting proofs and ciphertext...")
         socket_receiveProof = self.context.socket(zmq.REQ)
         socket_receiveProof.connect("tcp://10.0.2.15:5550")
-        self.merchant_public_key = groupObj.serialize(self.merchant_public_key)
-        socket_receiveProof.send(self.merchant_public_key)
+        merchant_public_key = groupObj.serialize(merchant_public_key)
+        socket_receiveProof.send(merchant_public_key)
         #time.sleep(0.2)
         print("Received proof is ...")
         received_proof =  socket_receiveProof.recv()
+        received_proof = bytesToObject(received_proof, groupObj)
         #received_proof = bytesToObject(received_proof, groupObj)
         #print(received_proof)
         return received_proof
@@ -116,11 +119,12 @@ class Merchant():
     @Output(list)
     def Verification(self, mpk, Rand, ct, proof1, proof2, proof3, proof4, mer_pk, d, Ledger, time):
         LHS=1
+        print(mpk)
         for i in range(len(ct['R'])):
             LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
         if pair(Rand['Sprime'], Rand['Rprime']) == proof1['p1y'] * mpk['e_Xh'] ** d and \
             pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
-                LHS==proof2['p4y'] and \
+                LHS!=proof2['p4y'] and \
                     pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['p2y'] and \
                     pair(mpk['g'],mer_pk) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
                     PoK.verifier3(mpk['g'],proof1['p1y'],proof1['p1z'],proof1['p1t'],mpk['vk']) == 1 and \
@@ -149,20 +153,21 @@ m = Merchant()
 mer_pk = m.request_pk()
 # #c.request_pp()
 # #c.request_col()
-spend_proof = m.request_proof()
-spend_proof = bytesToObject(spend_proof, groupObj)
+spend_proof = m.request_proof(mer_pk)
 # #print(output_proof)
 #
 #@Input(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, G2, int, list, ZR)
+d=1
+Ledger = []
 mpkst = spend_proof[0]
-randomstr = spend_proof[2]
-ct1st = spend_proof[1]
+randomstr = spend_proof[1]
+ct1st = spend_proof[2]
 proof1st = spend_proof[3]
 proof2st = spend_proof[4]
 proof3st = spend_proof[5]
 proof4st = spend_proof[6]
 timest = spend_proof[7]
-out = m.Verification(mpkst, randomstr, ct1st, proof1st, proof2st, proof3st, proof4st, mer_pk, 1, [], timest)
+out = m.Verification(mpkst, randomstr, ct1st, proof1st, proof2st, proof3st, proof4st, mer_pk, d, Ledger, timest)
 
 
 

@@ -117,7 +117,7 @@ while True:
         print(f"Received request: {message_merchant}")
         message_merchant = message_merchant.decode('utf-8')
         N = pk['Merlist'].index(message_merchant)
-        public_key = group.serialize(pk['pk'][N])
+        public_key = objectToBytes(pk['pk'][N], group)
         socket_merchant.send(public_key)
         socket_merchant.close()
 
