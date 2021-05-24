@@ -81,11 +81,11 @@ Mer = ['Apple','Ebay','Tesco','Amazon','Tesla','Colruyt','BMW','hp','Albert','IK
 #setup
 (mpk, msk) = Nir.Setup()
 keep_sending = True
-while keep_sending:
-    message_mpk = objectToBytes(mpk, group)
-    socket_publish.send(message_mpk)
-    #time.sleep(2)
-    keep_sending = False
+# while keep_sending:
+#     message_mpk = objectToBytes(mpk, group)
+#     socket_publish.send(message_mpk)
+#     time.sleep(10)
+#     keep_sending = False
 (pk,sk) = Nir.Keygen(mpk, msk, Mer)
 
 #setting up poller
@@ -94,21 +94,19 @@ poller.register(socket_client, zmq.REQ)
 poller.register(socket_merchant, zmq.REQ)
 
 #receiving requests
-while True:
-    
-    # message_to_publish = objectToBytes(mpk, group)
-    # socket_publish.send(message_to_publish)
-
+keep_receiving = True
+while keep_receiving:
     socks = dict(poller.poll())
     if socket_client in socks:
         #Registration
         message_client = socket_client.recv(zmq.DONTWAIT)
         message_client = message_client.decode('utf-8')
         print(f"Received request from customer for {message_client} collaterals ..")
-        Col = Nir.Registeration(mpk, msk, int(message_client))
+        Col = (mpk, Nir.Registeration(mpk, msk, int(message_client)))
         #print(Col)
         collateral_proofs = objectToBytes(Col, group)
         socket_client.send(collateral_proofs)
+        print("Sent collateral proof..")
         socket_client.close()
         
     if socket_merchant in socks:
@@ -119,7 +117,8 @@ while True:
         N = pk['Merlist'].index(message_merchant)
         public_key = objectToBytes(pk['pk'][N], group)
         socket_merchant.send(public_key)
+        print("Sent public key information to merchant..")
         socket_merchant.close()
 
-        
+        keep_receiving = False        
         
