@@ -38,7 +38,7 @@ class Customer():
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting parameters...")
         socket_pull = self.context.socket(zmq.PULL)
-        socket_pull.connect("tcp://10.0.2.15:5556")
+        socket_pull.connect("tcp://94.224.112.46:5556")
         mpk = socket_pull.recv()
         mpk = bytesToObject(mpk, groupObj)
         #print(mpk)
@@ -51,7 +51,7 @@ class Customer():
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting collateral proof...")
         socket = self.context.socket(zmq.REQ)
-        socket.connect("tcp://10.0.2.15:5551")   
+        socket.connect("tcp://94.224.112.46:5551")   
         for request in range(1):
             print(f"Sending request {request} ...")
             socket.send_string('2')
@@ -69,7 +69,7 @@ class Customer():
     @Input(mpk_t, Col_t, int)
     def spend_col(self, mpk, Col, d):
         socket_receiveProofReq = self.context.socket(zmq.REP)
-        socket_receiveProofReq.bind("tcp://10.0.2.15:5550")
+        socket_receiveProofReq.bind("tcp://*:5550")
         
         
         IDsk = groupObj.random(ZR); ID= mpk['e_gh']**IDsk 
