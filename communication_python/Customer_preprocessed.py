@@ -38,7 +38,7 @@ class Customer():
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting parameters...")
         socket_pull = self.context.socket(zmq.PULL)
-        socket_pull.connect("tcp://94.224.112.46:5556")
+        socket_pull.connect("tcp://10.0.2.15:5556")
         mpk = socket_pull.recv()
         mpk = bytesToObject(mpk, groupObj)
         #print(mpk)
@@ -54,7 +54,7 @@ class Customer():
         socket.connect("tcp://localhost:5551")   
         for request in range(1):
             print(f"Sending request {request} ...")
-            socket.send_string('2')
+            socket.send_string('15')
 
             message_colla = socket.recv()
             print("Received collateral proofs..")
@@ -66,51 +66,88 @@ class Customer():
         return message_colla
 
     #Generating the payment guarantee for requesting merchant..
-    @Input(mpk_t, Col_t, int)
-    def spend_col(self, mpk, Col, d):
-        socket_receiveProofReq = self.context.socket(zmq.REP)
-        socket_receiveProofReq.bind("tcp://*:5550")
-        
-        
-        IDsk = groupObj.random(ZR); ID= mpk['e_gh']**IDsk 
-        pk_message = socket_receiveProofReq.recv()
-        print("Received proof request from merchant..")
-        pk_message = groupObj.deserialize(pk_message)
-        time=groupObj.hash(objectToBytes(str(datetime.now()), groupObj),ZR)
-        SAgg=1; TAgg=1; PRFkey=0; R=[]; X=[]; y2=1
+    @Input(mpk_t, Col_t, ZR, list, GT, G2, int, GT, ZR,ZR, Rand_t)
+    @Output(mpk_t, Rand_t, ct_t,proof1_t, proof4_t, proof3_t, proof2_t, ZR)
+    def spend_col(self,mpk, Col, PRFkey, X, A, pk, d, ID, IDsk,time, Rand):
+        R=[]; y2=1
         if len(Col['PRFkey']) >= d:
             for i in range(d):
-                SAgg *= Col['S'][str(i)]
-                TAgg *= Col['T'][str(i)]
-                PRFkey += Col['PRFkey'][str(i)]
-                R.append(mpk['e_gh'] ** (1/(Col['PRFkey'][str(i)]+time)))
-                X.append(Col['PRFkey'][str(i)])
+                R.append(mpk['e_gh'] ** (1/(X[i]+time)))
                 y2 *= R[i] ** X[i]
-                A = pair(mpk['g'],mpk['vk']) ** PRFkey
-            tprime = groupObj.random(ZR)
-            Rprime = Col['R'] ** (1/tprime)
-            Sprime = SAgg ** tprime
-            Tprime = (TAgg ** (tprime**2))* (Col['W']**(d*tprime*(1-tprime)))
-            Wprime = Col['W'] ** (1/tprime)
             r = mpk['g'] ** (1/(PRFkey+time))
             C = ID * (pair(r, mpk['pp']))
-            C1 = pair(r, pk_message)
+            C1 = pair(r, pk)
+            u = mpk['e_gh'] ** (PRFkey * IDsk)
             (proof1) = self.PoK.prover1(mpk['g'],A,PRFkey,mpk['vk']) #Proof of SPS
             (proof2) = self.PoK.prover4(y2,X,R) # Proof of Aggeragetd collatorals
-            (proof3) = self.PoK.prover3(r,C1**PRFkey,PRFkey,pk_message) #Proof of ciphertext C1
+            (proof3) = self.PoK.prover3(r,C1**PRFkey,PRFkey,pk) #Proof of ciphertext C1
             (proof4) = self.PoK.prover2(C,mpk['e_gh'],((C/ID)**PRFkey)*(mpk['e_gh']**(-time*IDsk)),PRFkey,(-time*IDsk)) #Proof of ciphertext C0
-            Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
-            ct = { 'C': C, 'C1': C1, 'R':R }
+            ct = { 'C': C, 'C1': C1, 'R':R, 'u':u }
             spend_proof = (mpk, Rand, ct, proof1, proof2, proof3, proof4, time)
-            spend_proof = objectToBytes(spend_proof, groupObj)
-            socket_receiveProofReq.send(spend_proof)
-            print("Sent payment guarantee to merchant....")
-        
-        socket_receiveProofReq.close()
+            return spend_proof
+            
+        #socket_receiveProofReq.close()
 
 
-#main run    
+#main    
+def start_bench(group):
+    group.InitBenchmark()
+    group.StartBenchmark(["RealTime"])
+
+def end_bench(group):
+    group.EndBenchmark()
+    benchmarks = group.GetGeneralBenchmarks()
+    real_time = benchmarks['RealTime']
+    return real_time
+
 c = Customer()
 #c.request_pp()
 message_colla = (c.request_col())
-c.spend_col(message_colla[0], message_colla[1], 1)
+mpk = message_colla[0]
+Col = message_colla[1]
+context = zmq.Context()
+socket_receiveProofReq = context.socket(zmq.REP)
+socket_receiveProofReq.bind("tcp://*:5550")
+IDsk = groupObj.random(ZR); ID= mpk['e_gh']**IDsk
+def run_comm_trip(i):   
+    result = [i]  
+    PPSpending_time = 0; 
+    for j in range(10):
+        merchant_col_req = socket_receiveProofReq.recv()
+        print("Received proof request from merchant..")
+        merchant_col_req = bytesToObject(merchant_col_req, groupObj)
+        pk_message = merchant_col_req[1]
+        time=groupObj.hash(objectToBytes(str(datetime.now()), groupObj),ZR)
+        SAgg=1; TAgg=1; PRFkey=0; R=[]; X=[]; y2=1
+        d = merchant_col_req[0]
+        for i in range(d):
+            SAgg *= Col['S'][str(i)]
+            TAgg *= Col['T'][str(i)]
+            PRFkey += Col['PRFkey'][str(i)]
+            X.append(Col['PRFkey'][str(i)])
+            A = pair(mpk['g'],mpk['vk']) ** PRFkey
+        tprime = groupObj.random(ZR)
+        Rprime = Col['R'] ** (1/tprime)
+        Sprime = SAgg ** tprime
+        Tprime = (TAgg ** (tprime**2))* (Col['W']**(d*tprime*(1-tprime)))
+        Wprime = Col['W'] ** (1/tprime)
+        Rand = { 'Rprime':Rprime, 'Sprime':Sprime, 'Tprime':Tprime, 'Wprime':Wprime }
+        start_bench(groupObj)
+        spend_proof = c.spend_col(mpk, Col,PRFkey,X,A, pk_message, d, ID, IDsk, time, Rand)
+        PPSpending_time += end_bench(groupObj)
+        spend_proof = objectToBytes(spend_proof, groupObj)
+        socket_receiveProofReq.send(spend_proof)
+        print("Sent payment guarantee to merchant....")
+    PPSpending_time = (PPSpending_time*100)
+    result.append(PPSpending_time)        
+    return result
+
+
+book=Workbook()
+data=book.active    
+title = ['d','Spending Time']
+data.append(title) 
+for i in range(1,11):
+    result=run_comm_trip(i)  
+    data.append(result)
+book.save('Spend_comm_preprocc.xlsx')

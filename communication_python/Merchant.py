@@ -28,6 +28,8 @@ class Merchant():
         groupObj = PairingGroup('BN254')
         self.PoK = PoK(groupObj)
         self.SSS = SecretShare(groupObj)
+        self.context = zmq.Context()
+        self.socket_receiveProof = self.context.socket(zmq.REQ)
         Mer = ['Apple','Ebay','Tesco','Amazon','Tesla','Colruyt','BMW','hp','Albert','IKEA']
 
     #requesting public parameters from Nirvana
@@ -36,7 +38,7 @@ class Merchant():
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting parameters...")
         socket_pull = self.context.socket(zmq.PULL)
-        socket_pull.connect("tcp://10.0.2.15:5556")
+        socket_pull.connect("tcp://192.168.0.204:5556")
         mpk = socket_pull.recv()
         mpk = mpk.decode('utf-8')
         mpk = bytesToObject(mpk, groupObj)
@@ -49,7 +51,7 @@ class Merchant():
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting public key...")
         socket = self.context.socket(zmq.REQ)
-        socket.connect("tcp://10.0.2.15:5557")
+        socket.connect("tcp://localhost:5557")
         print(f"Sending request for public key ...")
         socket.send_string("Apple")
 
@@ -58,18 +60,23 @@ class Merchant():
         print(f"Received public key [ {merchant_public_key} ]")
         socket.close()
         return merchant_public_key
+    
+    
+    
 
     #Requesting payment guarantee from Customer
-    @Input(G2)
+    @Input(int, G2)
     @Output(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, ZR)
-    def request_proof(self, merchant_public_key):
+    def request_proof(self, num_col, merchant_public_key):
         print("Connecting to customer, requesting proofs and ciphertext...")
-        socket_receiveProof = self.context.socket(zmq.REQ)
-        socket_receiveProof.connect("tcp://10.0.2.15:5550")
-        merchant_public_key = groupObj.serialize(merchant_public_key)
-        socket_receiveProof.send(merchant_public_key)
+        # socket_receiveProof = self.context.socket(zmq.REQ)
+        # #socket_receiveProof.connect("tcp://81.164.204.249:5550")
+        self.socket_receiveProof.connect("tcp://localhost:5550")
+        proof_request_cust = (num_col, merchant_public_key)
+        merchant_public_key = objectToBytes(proof_request_cust, groupObj)
+        self.socket_receiveProof.send(merchant_public_key)
         #time.sleep(0.2)
-        received_proof =  socket_receiveProof.recv()
+        received_proof =  self.socket_receiveProof.recv()
         print("Received payment guarantee from customer..")
         received_proof = bytesToObject(received_proof, groupObj)
         return received_proof
@@ -106,25 +113,50 @@ class Merchant():
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))  
 
 
+def start_bench(group):
+    group.InitBenchmark()
+    group.StartBenchmark(["RealTime"])
+
+def end_bench(group):
+    group.EndBenchmark()
+    benchmarks = group.GetGeneralBenchmarks()
+    real_time = benchmarks['RealTime']
+    return real_time
+
 #main run
 m = Merchant()
 mer_pk = m.request_pk()
-spend_proof = m.request_proof(mer_pk)
-
-d=1
 Ledger = []
-mpkst = spend_proof[0]
-randomstr = spend_proof[1]
-ct1st = spend_proof[2]
-proof1st = spend_proof[3]
-proof2st = spend_proof[4]
-proof3st = spend_proof[5]
-proof4st = spend_proof[6]
-timest = spend_proof[7]
-out = m.Verification(mpkst, randomstr, ct1st, proof1st, proof2st, proof3st, proof4st, mer_pk, d, Ledger, timest)
-print(out)
+def run_comm_trip(d):
+    result = [d]
+    verify_time = 0    
+    spend_time = 0
+    for i in range(10):
+        start_bench(groupObj)
+        spend_proof = m.request_proof(d, mer_pk)
+        spend_time += end_bench(groupObj)
+        mpkst = spend_proof[0]
+        randomstr = spend_proof[1]
+        ct1st = spend_proof[2]
+        proof1st = spend_proof[3]
+        proof2st = spend_proof[4]
+        proof3st = spend_proof[5]
+        proof4st = spend_proof[6]
+        timest = spend_proof[7]
+        start_bench(groupObj)
+        out = m.Verification(mpkst, randomstr, ct1st, proof1st, proof2st, proof3st, proof4st, mer_pk, d, Ledger, timest)
+        verify_time += end_bench(groupObj)
+    spend_time = (spend_time*100)
+    result.append(spend_time)
+    verify_time = (verify_time*100)
+    result.append(verify_time) 
+    return result  
 
-
-    
-
-    
+book=Workbook()
+data=book.active    
+title = ['d','Spending Time','Verification Time']
+data.append(title) 
+for i in range(1,11):
+    result=run_comm_trip(i)  
+    data.append(result)
+book.save('Verify_comm_preprocc.xlsx')

@@ -16,6 +16,7 @@ from PoK import PoK
 context = zmq.Context()
 socket_client = context.socket(zmq.REP)
 socket_client.bind("tcp://*:5551") #customer connection
+
 socket_merchant = context.socket(zmq.REP)
 socket_merchant.bind("tcp://*:5557") #merchant connection
 socket_publish = context.socket(zmq.PUSH)
