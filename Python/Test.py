@@ -37,11 +37,11 @@ Ledger=[]
 (Pk_b,cert_b) = Nir.MRegister(mpk,Sgk_a,Vk_b,len(Mer),k)
 (Sk_c,Pk_c) = Nir.CuKeyGen(mpk,len(Cus))
 (cert_c) = Nir.CuRegister(mpk,Sgk_a,Pk_c,len(Cus),k)
-(k,kprime,certprime) = Nir.CuCreate(mpk,cert_c[10])
+(key, N, kprime,certprime) = Nir.CuCreate(mpk,cert_c[10])
 cert_j = Nir.AuCreate(mpk,Sgk_a,kprime,k)
-ID = mpk['e_gh'] ** Sk_c
-(inp) = Nir.Spending(mpk, k, Pk_b[11], 100,ID,cert_j)
-out = Nir.Verification(Pk_a, inp, Ledger, 100,11)
+ID = mpk['e_gh'] ** Sk_c[10]
+(inp) = Nir.Spending(mpk, key, Pk_b[8], 100,ID,cert_j)
+out = Nir.Verification(mpk, Pk_a, N, inp, Ledger, 100)
 print(out)
 #Nir.Decryption(  mpk, ct1, M1, ct2, M2)
 

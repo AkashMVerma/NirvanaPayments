@@ -1,8 +1,8 @@
 from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
-from charm.toolbox.ABEnc import Input, Output
+#from charm.toolbox.ABEnc import Input, Output
 from secretshare import SecretShare
-from charm.core.engine.util import serializeDict,objectToBytes
+from charm.core.engine.util import bytesToObject, serializeDict,objectToBytes
 import random
 import time
 import zmq
@@ -11,16 +11,21 @@ from datetime import datetime
 from openpyxl import load_workbook
 from openpyxl import Workbook
 from PoK import PoK
+from TSPS import TSPS
+from BLS import BLS01
 
 
 context = zmq.Context()
-socket_client = context.socket(zmq.REP)
-socket_client.bind("tcp://*:5551") #customer connection
+socket_clientReg = context.socket(zmq.REP)
+socket_clientReg.bind("tcp://*:5551") #customer connection
+socket_clientSig = context.socket(zmq.REP)
+socket_clientSig.bind("tcp://*:5558") #customer connection
 socket_merchant = context.socket(zmq.REP)
 socket_merchant.bind("tcp://*:5557") #merchant connection
 socket_publish = context.socket(zmq.PUSH)
 socket_publish.bind("tcp://*:5556") #publishing mpk
 
+'''
 mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gh':GT, 'e_Xh':GT, 'vk':G2 , 'X': G1 }
 msk_t = { 'sec':ZR, 'sgk':ZR }
 pk_t = { 'pk':G2, 'Merlist':str }
@@ -31,6 +36,7 @@ ct_t = { 'C':GT, 'C1':GT, 'R':GT}
 proof_t = {'z': ZR, 't': GT, 'y': GT}
 proof1_t = {'z1': ZR, 'z2': ZR, 't': GT, 'y': GT}
 prf_t= {'H':G1, 't':G1, 'c':ZR, 'r':ZR}
+'''
 
 class Nirvana():
     def __init__(self, groupObj):
@@ -38,29 +44,58 @@ class Nirvana():
         util = SecretUtil(groupObj)
         group = groupObj
     
-    @Output(mpk_t, msk_t)    
-    def Setup(self):
-        g, h, sec, sgk = group.random(G1), group.random(G2), group.random(ZR), group.random(ZR)
-        g.initPP(); h.initPP()
-        pp = h ** sec; e_gh = pair(g,h)
-        vk = h ** sgk; X = group.random(G1); e_Xh=pair(X,h)
-        mpk = {'g':g, 'h':h, 'pp':pp, 'e_gh':e_gh, 'e_Xh':e_Xh, 'vk': vk, 'X': X}
-        msk = {'sec':sec, 'sgk':sgk }
+      
+    def Setup(self,k,n):
+        (msk, pk) = TSPS.setup()
+        e_gh = pair(pk['g'],pk['h'])
+        mpk = {'g':pk['g'], 'h':pk['h'], 'X':pk['X'], 'Y':pk['Y'], 'e_gh':e_gh}
+        return (mpk, msk)
         return (mpk, msk)
 
-    @Input(mpk_t, msk_t, [str])
-    @Output(pk_t, sk_t)
-    def Keygen(self, mpk, msk, Merchants):
-        pkey = {}
-        shares = SSS.genShares(msk['sec'], 2, len(Merchants))
-        for i in range(len(shares)-1):
-            pkey[i] = mpk['h'] ** shares[i+1]
-        pk = {'pk': pkey, 'Merlist': Merchants}
-        sk = {'shares':shares}
-        return (pk, sk)
+    
+    def AuKeygen(self, mpk, msk,k,n):
+        (sgk,vk) = TSPS.kgen(msk,mpk,k,n)
+        AL={'sgk':sgk,'vk':vk}
+        return AL
 
-    @Input(mpk_t, msk_t, int)
-    @Output(Col_t)
+    def MKeygen(self,mpk,M):
+        Vkm={};Skm={}
+        for i in range(len(M)):
+            (vkm,skm)=BLS01.keygen(mpk['g'])
+            Vkm[i]=vkm; Skm[i]=skm
+        ML={'vkm':Vkm, 'MerList':M}    
+        return ML
+
+    def CuRegister(mpk,sgk,pk,k):
+        cert={}
+        sigma1=TSPS.par_sign1(mpk,pk,k)
+        sigma=TSPS.par_sign2(sigma1,sgk,k)
+        sigmaR=TSPS.reconst(sigma,k)
+        cert=sigmaR
+        return cert
+
+    def AuCreate(mpk,sgk,kprime,co,k):
+        cert={}
+        for i in range(co):
+            sigma1=TSPS.par_sign1(mpk,kprime,k)
+            sigma=TSPS.par_sign2(sigma1,sgk,k)
+            sigmaR=TSPS.reconst(sigma,k)
+            cert[i]=sigmaR
+        return cert
+
+    
+    
+    '''
+    def MRegister(mpk,sgk,vkm,M,k):
+        cert={}
+        for i in range(len(M)):
+            sigma1=TSPS.par_sign1(mpk,vkm,k)
+            sigma=TSPS.par_sign2(sigma1,sgk,k)
+            sigmaR=TSPS.reconst(sigma,k)
+            cert[i]=sigmaR
+        return cert
+    '''
+
     def Registeration(self, mpk, msk, n):
         PRFkey={}; key={}; S={}; T={}; t=group.random(ZR)
         for i in range(n):
@@ -87,27 +122,41 @@ keep_sending = True
 #     time.sleep(10)
 #     keep_sending = False
 (pk,sk) = Nir.Keygen(mpk, msk, Mer)
+(sgk,vk) = Nir.AuKeygen(mpk, msk, 1,1)
 
 #setting up poller
 poller = zmq.Poller()
-poller.register(socket_client, zmq.REQ)
+poller.register(socket_clientReg, zmq.REQ)
+poller.register(socket_clientSig, zmq.REQ)
 poller.register(socket_merchant, zmq.REQ)
 
 #receiving requests
 keep_receiving = True
 while keep_receiving:
     socks = dict(poller.poll())
-    if socket_client in socks:
+    if(socket_clientReg) in socks:
+        message_clientReg = socket_clientReg.recv(zmq.DONTWAIT)
+        message_clientReg = bytesToObject(message_clientReg,groupObj)
+        print(f"Received registration request for Customer with Public Key: {message_clientReg}")
+        cert = (mpk, Nir.CuRegister(mpk,sgk, message_clientReg,1))
+        approved_registration = objectToBytes(cert,groupObj)
+        socket_clientReg.send(approved_registration)
+        print(f"Sent approval to client {message_clientReg}..")
+        socket_clientReg.close()
+
+    if socket_clientSig in socks:
         #Registration
-        message_client = socket_client.recv(zmq.DONTWAIT)
-        message_client = message_client.decode('utf-8')
-        print(f"Received request from customer for {message_client} collaterals ..")
-        Col = (mpk, Nir.Registeration(mpk, msk, int(message_client)))
+        message_client = socket_clientSig.recv(zmq.DONTWAIT)
+        message_client = objectToBytes(message_client,groupObj)
+        k_prime = message_client[0]
+        num_col = message_client[1]
+        print(f"Received request from customer for collateral signature..")
+        data_to_send = (Nir.AuCreate(mpk,sgk,k_prime, num_col, 1))
         #print(Col)
-        collateral_proofs = objectToBytes(Col, group)
-        socket_client.send(collateral_proofs)
+        collateral_proofs = objectToBytes(data_to_send, groupObj)
+        socket_clientSig.send(collateral_proofs)
         print("Sent collateral proof..")
-        socket_client.close()
+        socket_clientSig.close()
         
     if socket_merchant in socks:
         #keygen

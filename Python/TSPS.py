@@ -69,6 +69,7 @@ class TSPS():
 
 
     def reconst(self, sigma, k):
+        SSS = SecretShare(group, True)
         R,S,T=group.init(G2, 1),group.init(G1, 1),group.init(G1, 1); list={}
         for i in range(1,k+1):
             list[group.init(ZR, i)]=group.init(ZR, i)
@@ -84,7 +85,11 @@ class TSPS():
                 return 1
         else:
             return 0
-
+    
+    def Randomize(self, cert_cn):
+        r = group.random()
+        (randomized_cert) = {'R':cert_cn['R']**r,'S':cert_cn['S']**r,'T':cert_cn['T']**r}
+        return randomized_cert
 
 '''
 SPS = SPS(groupObj)

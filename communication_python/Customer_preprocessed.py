@@ -38,7 +38,7 @@ class Customer():
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting parameters...")
         socket_pull = self.context.socket(zmq.PULL)
-        socket_pull.connect("tcp://10.0.2.15:5556")
+        socket_pull.connect("tcp://localhost:5556")
         mpk = socket_pull.recv()
         mpk = bytesToObject(mpk, groupObj)
         #print(mpk)

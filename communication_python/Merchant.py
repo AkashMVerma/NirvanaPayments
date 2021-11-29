@@ -38,7 +38,7 @@ class Merchant():
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting parameters...")
         socket_pull = self.context.socket(zmq.PULL)
-        socket_pull.connect("tcp://192.168.0.204:5556")
+        socket_pull.connect("tcp://localhost:5556")
         mpk = socket_pull.recv()
         mpk = mpk.decode('utf-8')
         mpk = bytesToObject(mpk, groupObj)

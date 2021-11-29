@@ -30,6 +30,9 @@ class Nirvana():
         global util, group
         util = SecretUtil(groupObj)
         group = groupObj
+        self.SecretShare = SecretShare(groupObj)
+        self.TSPS = TSPS(groupObj)
+        self.BLS01 = BLS01(groupObj)
     
   
     def PGen(self):
@@ -43,20 +46,21 @@ class Nirvana():
     def MKeygen(self,mpk,M):
         Vk_b={};Sk_b={}
         for i in range(M):
-            (vk_b,sk_b)=BLS01.keygen(mpk['g'])
+            (vk_b,sk_b)=BLS01.keygen(self.BLS01, mpk['g'])
             Vk_b[i]=vk_b; Sk_b[i]=sk_b    
         return (Vk_b,Sk_b)
     
     def MRegister(self,mpk,sgk,vkm,M,k):
         cert_b={}; Pk_b={}
         s=group.random()
-        shares= SSS.genShares(s, 2, M)
-        for i in range(1,M+1):
-            sigma1 = TSPS.par_sign1(mpk,vkm,k)
-            sigma = TSPS.par_sign2(sigma1,sgk,k)
-            sigmaR = TSPS.reconst(sigma,k)
+        mpk['pp'] = mpk['h']**s
+        shares= SSS.genShares(self.SecretShare, s, 2, M)
+        for i in range(1,M):
+            sigma1 = TSPS.par_sign1(self.TSPS,mpk,vkm[i],k)
+            sigma = TSPS.par_sign2(self.TSPS,sigma1,sgk,k)
+            sigmaR = TSPS.reconst(self.TSPS,sigma,k)
             cert_b[i]=sigmaR
-            Pk_b[i]=mpk['g']**shares[i]
+            Pk_b[i]=mpk['h']**shares[i]
         return (Pk_b,cert_b)
 
     def CuKeyGen(self,mpk,C):
@@ -66,26 +70,27 @@ class Nirvana():
             pk=mpk['g'] ** sk; Pk_c[i]=pk
         return (Sk_c,Pk_c)
 
-    def CuRegister(mpk,Sgk_a,Pk_c,C,k):
+    def CuRegister(self, mpk,Sgk_a,Pk_c,C,k):
         cert_c={}
         for i in range(C):
-            sigma1=TSPS.par_sign1(mpk,Pk_c[i],k)
-            sigma=TSPS.par_sign2(sigma1,Sgk_a,k)
-            sigmaR=TSPS.reconst(sigma,k)
+            sigma1=TSPS.par_sign1(self.TSPS, mpk,Pk_c[i],k)
+            sigma=TSPS.par_sign2(self.TSPS, sigma1,Sgk_a,k)
+            sigmaR=TSPS.reconst(self.TSPS, sigma,k)
             cert_c[i]=sigmaR
         return cert_c
 
-    def CuCreate(mpk,cert_cn):
+    def CuCreate(self, mpk,cert_cn):
         K={}; Kprime={}; Col={}
         k = group.random()
         kprime = mpk['g']**k
-        certprime=TSPS.Randomize(cert_cn)
-        return (k,kprime,certprime)
+        N = mpk['h']**k 
+        certprime=TSPS.Randomize(self.TSPS, cert_cn)
+        return (k, N, kprime, certprime)
     
-    def AuCreate(mpk,Sgk_a,kprime,k):
-        sigma1=TSPS.par_sign1(mpk,kprime,k)
-        sigma=TSPS.par_sign2(sigma1,Sgk_a,k)
-        sigmaR=TSPS.reconst(sigma,k)
+    def AuCreate(self,mpk,Sgk_a,kprime,k):
+        sigma1=TSPS.par_sign1(self.TSPS,mpk,kprime,k)
+        sigma=TSPS.par_sign2(self.TSPS,sigma1,Sgk_a,k)
+        sigmaR=TSPS.reconst(self.TSPS,sigma,k)
         cert_j=sigmaR
         return cert_j
 
@@ -94,15 +99,15 @@ class Nirvana():
         R = pair(r,mpk['h'])
         C = ID * (pair(r, mpk['pp']))
         C1 = pair(r, pk_bm)
-        certprime_j = TSPS.Randomize(cert_j)
+        certprime_j = TSPS.Randomize(self.TSPS,cert_j)
         inp = { 'C': C, 'C1': C1, 'R':R , 'cert': certprime_j}
         return (inp)
 
 
-    def Verification(self, Pk_a, inp, Ledger, time, N):
+    def Verification(self, mpk, Pk_a, N, inp, Ledger, time):
         LHS=1
         if inp['R'] not in Ledger and \
-            TSPS.verify(Pk_a,inp['certprime_j'])==1:
+            TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1:
                 Ledger.append(inp['R'])
                 return Ledger
         else:
