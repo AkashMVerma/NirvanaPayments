@@ -2,13 +2,13 @@ from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
 from charm.toolbox.secretutil import SecretUtil
 from PoK import PoK
 from openpyxl import Workbook
-from secreshare import SecretShare
+from secretshare import SecretShare
 from charm.core.engine.util import serializeDict
 
 groupObj = PairingGroup('BN254')
 SSS = SecretShare(groupObj, True)
 ZK= PoK(groupObj)
-class SPS():
+class TSPS():
     def __init__(self, groupObj):
         global util, group
         util = SecretUtil(groupObj)        
@@ -35,8 +35,7 @@ class SPS():
         vk = {'X': X, 'Y':Y}
         pk = {'X': mpk['h']**alpha, 'Y': mpk['h']**beta}
         return (sgk, vk, pk)
-
-    
+   
 
     def par_sign1(self,pk,M,k):
         R1={}; S1={}
@@ -77,15 +76,15 @@ class SPS():
             T *= sigma['T'][i] ** coeff[group.init(ZR, i)]
         return {'R':sigma['R'], 'S':sigma['S'], 'T':T}
 
-    def verify(self,pk,N,sigma):
-        if pair(sigma['R'],N) == pair(sigma['S'],pk['h']) and \
-            pair(sigma['T'],pk['h']) == pair(sigma['R'],pk['X'])*pair(sigma['S'],pk['Y']):
-                return print("True")
+    def verify(self,mpk,pk,N,sigma):
+        if pair(sigma['R'],N) == pair(sigma['S'],mpk['h']) and \
+            pair(sigma['T'],mpk['h']) == pair(sigma['R'],pk['X'])*pair(sigma['S'],pk['Y']):
+                return 1
         else:
-            return print("Wrong")
+            return 0
 
 
-
+'''
 SPS = SPS(groupObj)
 def start_bench(group):
     group.InitBenchmark()
@@ -103,7 +102,7 @@ def main(k,n):
     setup_time=0
     for i in range(10):
         start_bench(groupObj)
-        (msk, pk) = SPS.setup()
+        (mpk) = SPS.PGen()
         setup_time += end_bench(groupObj)
     result.append(setup_time*100)
 
@@ -111,7 +110,7 @@ def main(k,n):
     keygen_time=0
     for i in range(10):
         start_bench(groupObj)
-        (sk,vk) = SPS.kgen(msk,pk,k,n)
+        (sk,vk,pk) = SPS.kgen(mpk,k,n)
         keygen_time += end_bench(groupObj)
     result.append(keygen_time*100)
     key_size = sum([len(x) for x in serializeDict(sk, groupObj).values()])
@@ -119,11 +118,11 @@ def main(k,n):
  
  
     # Signing
-    m = groupObj.random(ZR); M = pk['g'] ** m; N = pk['h'] ** m
+    m = groupObj.random(ZR); M = mpk['g'] ** m; N = mpk['h'] ** m
     signing_time1=0
     for i in range(10):
         start_bench(groupObj)
-        (sigma1) = SPS.par_sign1(pk,M,k)
+        (sigma1) = SPS.par_sign1(mpk,M,k)
         signing_time1 += end_bench(groupObj)
     result.append(signing_time1*100)
     sig_size1 = sum([len(x) for x in serializeDict(sigma1, groupObj).values()])
@@ -142,7 +141,7 @@ def main(k,n):
     par_verify=0
     for i in range(10):
         start_bench(groupObj)
-        (out) = SPS.Par_verify(vk,pk,sigma,N,k)
+        (out) = SPS.Par_verify(vk,mpk,sigma,N,k)
         par_verify += end_bench(groupObj)
     result.append(par_verify*100)
 
@@ -159,7 +158,7 @@ def main(k,n):
     verification_time=0
     for i in range(10):
         start_bench(groupObj)
-        (out) = SPS.verify(pk, N, sigmaR)
+        (out) = SPS.verify(mpk, pk, N, sigmaR)
         verification_time += end_bench(groupObj)
     result.append(verification_time*100)
     return result
@@ -172,3 +171,4 @@ data.append(title)
 for n in range(3,19):
     data.append(main(n-2,n))
 book.save("Result.xlsx")
+'''

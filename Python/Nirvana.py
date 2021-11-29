@@ -37,85 +37,74 @@ class Nirvana():
         return (mpk)
 
 
-    def AuKeygen(self, mpk, msk,k,n):
-        (sgk_a,vk_a,pk_a) = TSPS.kgen(msk,mpk,k,n)
-        return (sgk_a,vk_a,pk_a)
+    def AuKeygen(self, mpk,k,n):
+        (Sgk_a,Vk_a,Pk_a) = TSPS.kgen(mpk,k,n)
+        return (Sgk_a,Vk_a,Pk_a)
 
     def MKeygen(self,mpk,M):
-        Vkm={};Skm={}
+        Vk_b={};Sk_b={}
         for i in range(M):
-            (vkm,skm)=BLS01.keygen(mpk['g'])
-            Vkm[i]=vkm; Skm[i]=skm
-        ML={'vkm':Vkm, 'skm': Skm}    
-        return ML
+            (vk_b,sk_b)=BLS01.keygen(mpk['g'])
+            Vk_b[i]=vk_b; Sk_b[i]=sk_b    
+        return (Vk_b,Sk_b)
     
     def MRegister(mpk,sgk,vkm,M,k):
-        cert={}
-        for i in range(M):
-            sigma1=TSPS.par_sign1(mpk,vkm,k)
-            sigma=TSPS.par_sign2(sigma1,sgk,k)
-            sigmaR=TSPS.reconst(sigma,k)
-            cert[i]=sigmaR
-        return cert
+        cert_b={}; Pk_b={}
+        s=group.random()
+        shares= SSS.genShares(s, 2, M)
+        for i in range(1,M+1):
+            sigma1 = TSPS.par_sign1(mpk,vkm,k)
+            sigma = TSPS.par_sign2(sigma1,sgk,k)
+            sigmaR = TSPS.reconst(sigma,k)
+            cert_b[i]=sigmaR
+            Pk_b[i]=mpk['g']**shares[i]
+        return (Pk_b,cert_b)
 
     def CuKeyGen(self,mpk,C):
-        Sk={}; Pk={}
+        Sk_c={}; Pk_c={}
         for i in range(C):
-            sk=group.random(); Sk[i]=sk
-            pk=mpk['g'] ** sk; Pk[i]=pk
-        CL={'sk':sk, 'pk':pk}
-        return CL
+            sk=group.random(); Sk_c[i]=sk
+            pk=mpk['g'] ** sk; Pk_c[i]=pk
+        return (Sk_c,Pk_c)
 
-    def CuRegister(mpk,sgk,pk,C,k):
-        cert={}
+    def CuRegister(mpk,Sgk_a,Pk_c,C,k):
+        cert_c={}
         for i in range(C):
-            sigma1=TSPS.par_sign1(mpk,pk,k)
-            sigma=TSPS.par_sign2(sigma1,sgk,k)
+            sigma1=TSPS.par_sign1(mpk,Pk_c[i],k)
+            sigma=TSPS.par_sign2(sigma1,Sgk_a,k)
             sigmaR=TSPS.reconst(sigma,k)
-            cert[i]=sigmaR
-        return cert
+            cert_c[i]=sigmaR
+        return cert_c
 
-    def CuCreate(mpk,cert,co):
+    def CuCreate(mpk,cert_cn):
         K={}; Kprime={}; Col={}
-        for i in range(co):
-            k=group.random();K[i]=k
-            kprime=mpk['g']**k; Kprime[i]=kprime
-        Col={'k':K,'kprime':Kprime}
-        certprime=TSPS.Randomize(cert)
-        return (Col,certprime)
+        k = group.random()
+        kprime = mpk['g']**k
+        certprime=TSPS.Randomize(cert_cn)
+        return (k,kprime,certprime)
     
-    def AuCreate(mpk,sgk,kprime,Col,k):
+    def AuCreate(mpk,Sgk_a,kprime,k):
         sigma1=TSPS.par_sign1(mpk,kprime,k)
-        sigma=TSPS.par_sign2(sigma1,sgk,k)
+        sigma=TSPS.par_sign2(sigma1,Sgk_a,k)
         sigmaR=TSPS.reconst(sigma,k)
-        Col['cert']=sigmaR
-        return Col
+        cert_j=sigmaR
+        return cert_j
 
-    def Spending(self, mpk, Col, pk, time,N,ID,cert):
-        r = mpk['g'] ** (1/(Col['PRFkey']+time))
+    def Spending(self, mpk, k, pk_bm, time,N,ID,cert_j):
+        r = mpk['g'] ** (1/(k+time))
         R = pair(r,mpk['h'])
         C = ID * (pair(r, mpk['pp']))
-        C1 = pair(r, pk['pk'][N])
-        certprime=TSPS.Randomize(cert)
-        ct = { 'C': C, 'C1': C1, 'R':R }
-        return (ct, certprime)
+        C1 = pair(r, pk_bm)
+        certprime_j = TSPS.Randomize(cert_j)
+        inp = { 'C': C, 'C1': C1, 'R':R , 'cert': certprime_j}
+        return (inp)
 
 
-    def Verification(self, mpk, pk, Rand, L1, L2, ct, certprime, d, Ledger, time, N):
+    def Verification(self, Pk_a, inp, Ledger, time, N):
         LHS=1
-        for i in range(len(ct['R'])):
-            LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
-        if pair(Rand['Sprime'], Rand['Rprime']) == proof1['y'] * mpk['e_Xh'] ** d and \
-            pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
-                LHS==proof2['y'] and \
-                    L1 * (ct['C']**(-time)) == proof4['y'] and \
-                    L2 * (ct['C1'] ** (-time)) == proof3['y'] and \
-                    PoK.verifier3(mpk['g'],proof1['y'],proof1['z'],proof1['t'],mpk['vk']) == 1 and \
-                        PoK.verifier5(proof2['y'],proof2['z'],proof2['t'],ct['R']) == 1 and \
-                            PoK.verifier4(proof3['y'],proof3['z'],proof3['t'],ct['C1'],pk['pk'][N]) == 1 and \
-                                PoK.verifier2(ct['C'],mpk['e_gh'],proof4['y'],proof4['z1'],proof4['z2'],proof4['t'],ct['u'])==1 and \
-                                ct['R'] not in Ledger:
-                Ledger.append(ct['R'])
+        if inp['R'] not in Ledger and \
+            TSPS.verify(Pk_a,inp['certprime_j'])==1:
+                Ledger.append(inp['R'])
                 return Ledger
         else:
             return Ledger
