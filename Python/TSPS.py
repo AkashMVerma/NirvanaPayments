@@ -14,26 +14,27 @@ class SPS():
         util = SecretUtil(groupObj)        
         group = groupObj
                         
-    def setup(self):
-        g, h = group.random(G1), group.random(G2)
-        alpha, beta = group.random(ZR), group.random(ZR)
-        msk = {'alpha':alpha, 'beta':beta}        
-        pk = {'g':g, 'h':h, 'X':h**alpha, 'Y':h ** beta}
-        return (msk, pk)
+    def PGen(self):
+        g, h = group.random(G1), group.random(G2)   
+        e_gh = pair(g,h)
+        mpk = {'g':g, 'h':h, 'e_gh':e_gh}
+        return (mpk)
 
 
-    def kgen(self, msk, pk, k,n):
-        sk={}; vk={}; alpha={}; beta={}; X={}; Y={}
-        alphashares = SSS.genShares(msk['alpha'], k, n)
-        betashares = SSS.genShares(msk['beta'], k, n)
+    def kgen(self, mpk, k,n):
+        sgk={}; vk={}; X={}; Y={}
+        alpha, beta = group.random(), group.random()
+        alphashares = SSS.genShares(alpha, k, n)
+        betashares = SSS.genShares(beta, k, n)
         for i in range(1,n+1):
-            alpha[i] = alphashares[i]
-            beta[i] = betashares[i]
-            X[i] = pk['h'] ** alpha[i]
-            Y[i] = pk['h'] ** beta[i]
-        sk = {'alpha': alpha, 'beta': beta}
-        vk = {'X': X, 'Y':Y}   
-        return (sk, vk)
+            #alphaShare[i] = alphashares[i]
+            #betaShare[i] = betashares[i]
+            X[i] = mpk['h'] ** alphashares[i]
+            Y[i] = mpk['h'] ** betashares[i]
+        sgk = {'alpha': alphashares, 'beta': betashares}
+        vk = {'X': X, 'Y':Y}
+        pk = {'X': mpk['h']**alpha, 'Y': mpk['h']**beta}
+        return (sgk, vk, pk)
 
     
 
