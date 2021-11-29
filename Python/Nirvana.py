@@ -32,17 +32,14 @@ class Nirvana():
         group = groupObj
     
   
-    def Setup(self,k,n):
-        (msk, pk) = TSPS.setup()
-        e_gh = pair(pk['g'],pk['h'])
-        mpk = {'g':pk['g'], 'h':pk['h'], 'X':pk['X'], 'Y':pk['Y'], 'e_gh':e_gh}
-        return (mpk, msk)
+    def PGen(self,k,n):
+        mpk = TSPS.PGen()
+        return (mpk)
 
 
     def AuKeygen(self, mpk, msk,k,n):
-        (sgk,vk) = TSPS.kgen(msk,mpk,k,n)
-        AL={'sgk':sgk,'vk':vk}
-        return AL
+        (sgk_a,vk_a,pk_a) = TSPS.kgen(msk,mpk,k,n)
+        return (sgk_a,vk_a,pk_a)
 
     def MKeygen(self,mpk,M):
         Vkm={};Skm={}
