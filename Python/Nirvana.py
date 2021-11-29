@@ -33,7 +33,7 @@ class Nirvana():
         self.SecretShare = SecretShare(groupObj)
         self.TSPS = TSPS(groupObj)
         self.BLS01 = BLS01(groupObj)
-    
+        self.PoK = PoK(groupObj)
   
     def PGen(self):
         mpk = TSPS.PGen(self)
@@ -88,27 +88,41 @@ class Nirvana():
         return (k, N, kprime, certprime)
     
     def AuCreate(self,mpk,Sgk_a,kprime,k):
-        sigma1=TSPS.par_sign1(self.TSPS,mpk,kprime,k)
-        sigma=TSPS.par_sign2(self.TSPS,sigma1,Sgk_a,k)
-        sigmaR=TSPS.reconst(self.TSPS,sigma,k)
+        sigma1 = TSPS.par_sign1(self.TSPS,mpk,kprime,k)
+        sigma = TSPS.par_sign2(self.TSPS,sigma1,Sgk_a,k)
+        sigmaR = TSPS.reconst(self.TSPS,sigma,k)
         cert_j=sigmaR
         return cert_j
 
-    def Spending(self, mpk, k, pk_bm, time,ID,cert_j):
-        r = mpk['g'] ** (1/(k+time))
+    def Spending(self, mpk, key, pk_bm, time,ID,Sk_cn,cert_j):
+        r = mpk['g'] ** (1/(key+time))
         R = pair(r,mpk['h'])
-        C = ID * (pair(r, mpk['pp']))
+        A1=(pair(r, mpk['pp']))
+        C = ID * A1
         C1 = pair(r, pk_bm)
         certprime_j = TSPS.Randomize(self.TSPS,cert_j)
-        inp = { 'C': C, 'C1': C1, 'R':R , 'cert': certprime_j}
-        return (inp)
+        y2 = R ** key; A= A1 ** key
+        u = mpk['e_gh'] ** (key * Sk_cn)
+        (proof1) = PoK.prover3(self.PoK,mpk['g'],A,key,mpk['pp']) #Proof of SPS
+        (proof2) = PoK.prover4(self.PoK,y2,key,R) # Proof of Aggeragetd collatorals
+        (proof3) = PoK.prover3(self.PoK,r,C1**key,key,pk_bm) #Proof of ciphertext C1
+        (proof4) = PoK.prover2(self.PoK,C,mpk['e_gh'],((C/ID)**key)*(mpk['e_gh']**(-time*Sk_cn)),key,(-time*Sk_cn)) #Proof of ciphertext C0
+        inp = { 'C': C, 'C1': C1 , 'cert': certprime_j, 'u':u}
+        pi = {'pi1': proof1,'pi2': proof2,'pi3': proof3,'pi4': proof4}
+        return (pi, inp, R)
 
 
-    def Verification(self, mpk, Pk_a, N, inp, Ledger, time):
-        LHS=1
-        if inp['R'] not in Ledger and \
-            TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1:
-                Ledger.append(inp['R'])
+    def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk):
+        if R not in Ledger and \
+            TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1 and \
+                mpk['e_gh'] * (R ** (-time))==pi['pi2']['y'] and \
+                    L1 * (inp['C']**(-time)) == pi['pi4']['y'] and \
+                    L2 * (inp['C1'] ** (-time)) == pi['pi3']['y'] and \
+                        PoK.verifier3(self.PoK,mpk['g'],pi['pi1']['y'],pi['pi1']['z'],pi['pi1']['t'],mpk['pp']) == 0 and \
+                        PoK.verifier5(self.PoK,pi['pi2']['y'],pi['pi2']['z'],pi['pi2']['t'],R) == 1 and \
+                            PoK.verifier4(self.PoK,pi['pi3']['y'],pi['pi3']['z'],pi['pi3']['t'],inp['C1'],pk) == 1 and \
+                                PoK.verifier2(self.PoK,inp['C'],mpk['e_gh'],pi['pi4']['y'],pi['pi4']['z1'],pi['pi4']['z2'],pi['pi4']['t'],inp['u'])==1:
+                Ledger.append(R)
                 return Ledger
         else:
             return print("False")

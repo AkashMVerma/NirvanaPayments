@@ -25,14 +25,12 @@ class PoK():
         z = c * x + r
         return { 'z':z, 't':t, 'y':y }
     def prover4(self,y,x,R):
-        t=1; Rbyte=objectToBytes(0, group); r=[]; z=[]
-        for i in range(len(x)):
-            r.append(group.random(ZR))
-            t *= R[i] ** r[i]
-            Rbyte += objectToBytes(R[i], group)
+        Rbyte=objectToBytes(0, group)
+        r= group.random(ZR)
+        t = R ** r
+        Rbyte += objectToBytes(R, group)
         c = group.hash(objectToBytes(y, group) + objectToBytes(t, group) + Rbyte, ZR)
-        for i in range(len(x)):
-            z.append(c * x[i] + r[i])
+        z= c * x + r
         return { 'z':z, 't':t, 'y':y } 
     def verifier1(self, g, y, z, t):
         c = group.hash(objectToBytes(y, group)+objectToBytes(t, group),ZR)
@@ -59,10 +57,9 @@ class PoK():
         else:
             return 0
     def verifier5(self, y, z, t, R):
-        Rbyte=objectToBytes(0,group); RHS=1
-        for i in range(len(R)):
-            RHS *= R[i] ** z[i]
-            Rbyte += objectToBytes(R[i], group)
+        Rbyte=objectToBytes(0,group)
+        RHS = R ** z
+        Rbyte += objectToBytes(R, group)
         c = group.hash(objectToBytes(y, group) + objectToBytes(t, group) + Rbyte, ZR)
         if (y**c) * t == RHS:
             return 1

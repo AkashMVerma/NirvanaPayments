@@ -5,9 +5,6 @@ from openpyxl import Workbook
 from secretshare import SecretShare
 from charm.core.engine.util import serializeDict
 
-
-
-
 class TSPS():
     def __init__(self, groupObj):
         global util, group
@@ -27,7 +24,6 @@ class TSPS():
         alpha, beta = group.random(), group.random()
         alphashares = SSS.genShares(alpha, k, n)
         betashares = SSS.genShares(beta, k, n)
-        print(alphashares)
         for i in range(1,n+1):
             alphaShare[i] = alphashares[i]
             betaShare[i] = betashares[i]

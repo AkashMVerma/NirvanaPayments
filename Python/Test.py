@@ -10,6 +10,7 @@ from openpyxl import Workbook
 import math
 from TSPS import TSPS
 import random
+from datetime import datetime
 
 def start_bench(group):
     group.InitBenchmark()
@@ -30,6 +31,7 @@ Mer = ['Apple'] * 10
 Cus = ['Alice'] * 20
 n=10; k=math.floor(n/2)
 Ledger=[]
+time=groupObj.hash(objectToBytes(str(datetime.now()), groupObj),ZR)
 
 (mpk) = Nir.PGen()
 (Sgk_a,Vk_a,Pk_a) = Nir.AuKeygen(mpk, k,n)
@@ -40,8 +42,10 @@ Ledger=[]
 (key, N, kprime,certprime) = Nir.CuCreate(mpk,cert_c[10])
 cert_j = Nir.AuCreate(mpk,Sgk_a,kprime,k)
 ID = mpk['e_gh'] ** Sk_c[10]
-(inp) = Nir.Spending(mpk, key, Pk_b[8], 100,ID,cert_j)
-out = Nir.Verification(mpk, Pk_a, N, inp, Ledger, 100)
+(pi,inp,R) = Nir.Spending(mpk, key, Pk_b[8], time,ID, Sk_c[10],cert_j)
+L1=pair(mpk['g'],mpk['pp']) 
+L2=pair(mpk['g'],Pk_b[8])
+out = Nir.Verification(mpk, Pk_a, N, pi, inp, R, Ledger, time,L1,L2, Pk_b[8])
 print(out)
 #Nir.Decryption(  mpk, ct1, M1, ct2, M2)
 
