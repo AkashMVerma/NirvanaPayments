@@ -1,4 +1,15 @@
-        
+from Nirvana import Nirvana   
+from charm.toolbox.pairinggroup import PairingGroup,ZR,G1,G2,GT,pair
+from charm.toolbox.secretutil import SecretUtil
+from BLS import BLS01
+#from charm.toolbox.ABEnc import Input, Output
+from secretshare import SecretShare
+from charm.core.engine.util import serializeDict,objectToBytes
+from openpyxl import load_workbook
+from openpyxl import Workbook
+import math
+from TSPS import TSPS
+import random
 
 def start_bench(group):
     group.InitBenchmark()
@@ -12,12 +23,29 @@ def end_bench(group):
 
 groupObj = PairingGroup('BN254')
 Nir = Nirvana(groupObj)
-PoK1 = PoK1(groupObj)
-PoK2 = PoK2(groupObj)
-PoK3 = PoK3(groupObj)
 SSS = SecretShare(groupObj)
-Mer = ['Apple'] * 2001
+TSPS=TSPS(groupObj)
+BLS01=BLS01(groupObj)
+Mer = ['Apple'] * 10
+Cus = ['Alice'] * 20
+n=10; k=math.floor(n/2)
+Ledger=[]
 
+(mpk) = Nir.PGen()
+(Sgk_a,Vk_a,Pk_a) = Nir.AuKeygen(mpk, k,n)
+(Vk_b,Sk_b) = Nir.MKeygen(mpk,len(Mer))
+(Pk_b,cert_b) = Nir.MRegister(mpk,Sgk_a,Vk_b,len(Mer),k)
+(Sk_c,Pk_c) = Nir.CuKeyGen(mpk,len(Cus))
+(cert_c) = Nir.CuRegister(mpk,Sgk_a,Pk_c,len(Cus),k)
+(k,kprime,certprime) = Nir.CuCreate(mpk,cert_c[10])
+cert_j = Nir.AuCreate(mpk,Sgk_a,kprime,k)
+ID = mpk['e_gh'] ** Sk_c
+(inp) = Nir.Spending(mpk, k, Pk_b[11], 100,ID,cert_j)
+out = Nir.Verification(Pk_a, inp, Ledger, 100,11)
+print(out)
+#Nir.Decryption(  mpk, ct1, M1, ct2, M2)
+
+'''
 def run_round_trip(n,d,M):
     result=[n,d,M]
     # setup
@@ -25,7 +53,7 @@ def run_round_trip(n,d,M):
     setup_time = 0
     for i in range(1):
         start_bench(groupObj)
-        (mpk, msk) = Nir.Setup()
+        (mpk) = Nir.PGen(math.floor(n/2),n)
         setup_time += end_bench(groupObj)
     setup_time = setup_time * 10
     result.append(setup_time)
@@ -36,24 +64,23 @@ def run_round_trip(n,d,M):
     Key_Gen_time=0
     for i in range(1):
         start_bench(groupObj)
-        
-        (pk,sk) = Nir.Keygen(mpk, msk, Merchants)
+        (Sgk_a,Vk_a,Pk_a) = Nir.AuKeygen(mpk, math.floor(n/2),n)
         Key_Gen_time += end_bench(groupObj)
     Key_Gen_time = Key_Gen_time * 10
-    public_key_size = sum([len(x) for x in serializeDict(pk, groupObj).values()]) 
-    secret_key_size = sum([len(x) for x in serializeDict(sk, groupObj).values()]) 
-    secret_key_size = secret_key_size /10
+    public_key_size = sum([len(x) for x in serializeDict(mpk, groupObj).values()]) 
+    #secret_key_size = sum([len(x) for x in serializeDict(msk, groupObj).values()]) 
+    #secret_key_size = secret_key_size /10
     public_key_size = public_key_size /10
     result.append(Key_Gen_time)
     result.append(public_key_size)
-    result.append(secret_key_size)
+    #result.append(secret_key_size)
 
     # Registeration
     
     Registeration_time=0
     for i in range(1):
         start_bench(groupObj)
-        (Col) = Nir.Registeration(mpk, msk, n)
+        (Col) = Nir.Registeration(mpk, Sgk_a, n)
         Registeration_time += end_bench(groupObj)
     Registeration_time = Registeration_time * 10
     Collateral_size = sum([len(x) for x in serializeDict(Col, groupObj).values()]) 
@@ -108,3 +135,4 @@ for n in range(2,3):
     print(n)
 book.save("Result1.xlsx")
 
+'''

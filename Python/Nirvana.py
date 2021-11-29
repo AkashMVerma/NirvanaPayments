@@ -32,13 +32,12 @@ class Nirvana():
         group = groupObj
     
   
-    def PGen(self,k,n):
-        mpk = TSPS.PGen()
+    def PGen(self):
+        mpk = TSPS.PGen(self)
         return (mpk)
 
-
     def AuKeygen(self, mpk,k,n):
-        (Sgk_a,Vk_a,Pk_a) = TSPS.kgen(mpk,k,n)
+        (Sgk_a,Vk_a,Pk_a) = TSPS.kgen(self,mpk,k,n)
         return (Sgk_a,Vk_a,Pk_a)
 
     def MKeygen(self,mpk,M):
@@ -48,7 +47,7 @@ class Nirvana():
             Vk_b[i]=vk_b; Sk_b[i]=sk_b    
         return (Vk_b,Sk_b)
     
-    def MRegister(mpk,sgk,vkm,M,k):
+    def MRegister(self,mpk,sgk,vkm,M,k):
         cert_b={}; Pk_b={}
         s=group.random()
         shares= SSS.genShares(s, 2, M)
@@ -90,7 +89,7 @@ class Nirvana():
         cert_j=sigmaR
         return cert_j
 
-    def Spending(self, mpk, k, pk_bm, time,N,ID,cert_j):
+    def Spending(self, mpk, k, pk_bm, time,ID,cert_j):
         r = mpk['g'] ** (1/(k+time))
         R = pair(r,mpk['h'])
         C = ID * (pair(r, mpk['pp']))
@@ -107,7 +106,7 @@ class Nirvana():
                 Ledger.append(inp['R'])
                 return Ledger
         else:
-            return Ledger
+            return print("False")
 
     def Decryption(self, mpk, ct1, M1, ct2, M2): 
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])

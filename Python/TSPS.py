@@ -5,9 +5,9 @@ from openpyxl import Workbook
 from secretshare import SecretShare
 from charm.core.engine.util import serializeDict
 
-groupObj = PairingGroup('BN254')
-SSS = SecretShare(groupObj, True)
-ZK= PoK(groupObj)
+
+
+
 class TSPS():
     def __init__(self, groupObj):
         global util, group
@@ -22,15 +22,17 @@ class TSPS():
 
 
     def kgen(self, mpk, k,n):
-        sgk={}; vk={}; X={}; Y={}
+        sgk={}; vk={}; X={}; Y={}; alphaShare={}; betaShare={}
+        SSS = SecretShare(group, True)
         alpha, beta = group.random(), group.random()
         alphashares = SSS.genShares(alpha, k, n)
         betashares = SSS.genShares(beta, k, n)
+        print(alphashares)
         for i in range(1,n+1):
-            #alphaShare[i] = alphashares[i]
-            #betaShare[i] = betashares[i]
-            X[i] = mpk['h'] ** alphashares[i]
-            Y[i] = mpk['h'] ** betashares[i]
+            alphaShare[i] = alphashares[i]
+            betaShare[i] = betashares[i]
+            X[i] = mpk['h'] ** alphaShare[i]
+            Y[i] = mpk['h'] ** betaShare[i]
         sgk = {'alpha': alphashares, 'beta': betashares}
         vk = {'X': X, 'Y':Y}
         pk = {'X': mpk['h']**alpha, 'Y': mpk['h']**beta}
