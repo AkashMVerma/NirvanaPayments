@@ -19,7 +19,7 @@ class Witness():
         util = SecretUtil(groupObj)
         group = groupObj
         self.TSPS = TSPS(groupObj)
-        
+        self.BLS01 = BLS01(groupObj)
         
 
     def WitnessApproval(self,mpk, pk, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger):

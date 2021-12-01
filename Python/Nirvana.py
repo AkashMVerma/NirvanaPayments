@@ -98,7 +98,7 @@ class Nirvana():
     def Spending(self, mpk, key, pk_bm, time,ID,Sk_cn,cert_j,w_j,listWitness):
         r = mpk['g'] ** (1/(key+time))
         R = pair(r,mpk['h'])
-        A1=(pair(r, mpk['pp']))
+        A1 = (pair(r, mpk['pp']))
         C = ID * A1
         C1 = pair(r, pk_bm)
         wprime_j = {}
@@ -114,7 +114,7 @@ class Nirvana():
         (proof4) = PoK.prover2(self.PoK,C,mpk['e_gh'],((C/ID)**key)*(mpk['e_gh']**(-time*Sk_cn)),key,(-time*Sk_cn)) #Proof of ciphertext C0
         inp = { 'C': C, 'C1': C1 , 'cert': certprime_j, 'u':u}
         pi = {'pi1': proof1,'pi2': proof2,'pi3': proof3,'pi4': proof4}
-        return (pi, inp, R,wprime_j)
+        return (pi, inp, R, wprime_j)
 
 
     def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_b):
@@ -127,8 +127,8 @@ class Nirvana():
                         PoK.verifier5(self.PoK,pi['pi2']['y'],pi['pi2']['z'],pi['pi2']['t'],R) == 1 and \
                             PoK.verifier4(self.PoK,pi['pi3']['y'],pi['pi3']['z'],pi['pi3']['t'],inp['C1'],pk) == 1 and \
                                 PoK.verifier2(self.PoK,inp['C'],mpk['e_gh'],pi['pi4']['y'],pi['pi4']['z1'],pi['pi4']['z2'],pi['pi4']['t'],inp['u'])==1:
-                                        sigma = Witness.WitnessApproval(self.witness,mpk, pk, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
-                                        if len(sigma)>= math.ceiling(len(witnessindexes)/2):
+                                        sigma = Witness.WitnessApproval(self.witness,mpk, Pk_a, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
+                                        if len(sigma)>= math.ceil(len(witnessindexes)/2):
                                             return print("Verification succeeded")
         else:
             return print("Verification failed")
