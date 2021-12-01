@@ -74,19 +74,33 @@ class Nirvana():
         certprime=TSPS.Randomize(self.TSPS, cert_cn)
         return (k, N, kprime, certprime)
     
-    def AuCreate(self,mpk,Sgk_a,kprime,k):
+    def AuCreate(self,mpk,Sgk_a,kprime,k,wit,w):
         sigma1 = TSPS.par_sign1(self.TSPS,mpk,kprime,k)
         sigma = TSPS.par_sign2(self.TSPS,sigma1,Sgk_a,k)
         sigmaR = TSPS.reconst(self.TSPS,sigma,k)
         cert_j=sigmaR
-        return cert_j
+        selectedWitnesses = random.sample(wit,w)
+        w_j = {}
+        list_witness_indexes = []
+        for i in range(len(selectedWitnesses)):
+            
+            Witness_int=group.hash(objectToBytes(selectedWitnesses[i], group),ZR)
+            sigma1 = TSPS.par_sign1(self.TSPS, mpk, mpk['g']**Witness_int,k)
+            sigma = TSPS.par_sign2(self.TSPS,sigma1,Sgk_a,k)
+            sigmaR = TSPS.reconst(self.TSPS,sigma,k)
+            list_witness_indexes.append(wit.index(selectedWitnesses[i]))
+            w_j[list_witness_indexes[i]] = sigmaR
+        return cert_j,w_j,list_witness_indexes
 
-    def Spending(self, mpk, key, pk_bm, time,ID,Sk_cn,cert_j):
+    def Spending(self, mpk, key, pk_bm, time,ID,Sk_cn,cert_j,w_j,listWitness):
         r = mpk['g'] ** (1/(key+time))
         R = pair(r,mpk['h'])
         A1=(pair(r, mpk['pp']))
         C = ID * A1
         C1 = pair(r, pk_bm)
+        wprime_j = {}
+        for i in listWitness:
+            wprime_j[i] = TSPS.Randomize(self.TSPS,w_j[i])
         certprime_j = TSPS.Randomize(self.TSPS,cert_j)
         y2 = R ** key; A= A1 ** key
         u = mpk['e_gh'] ** (key * Sk_cn)
@@ -96,10 +110,10 @@ class Nirvana():
         (proof4) = PoK.prover2(self.PoK,C,mpk['e_gh'],((C/ID)**key)*(mpk['e_gh']**(-time*Sk_cn)),key,(-time*Sk_cn)) #Proof of ciphertext C0
         inp = { 'C': C, 'C1': C1 , 'cert': certprime_j, 'u':u}
         pi = {'pi1': proof1,'pi2': proof2,'pi3': proof3,'pi4': proof4}
-        return (pi, inp, R)
+        return (pi, inp, R,wprime_j)
 
 
-    def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk):
+    def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk,wprime_j,wit):
         if R not in Ledger and \
             TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1 and \
                 mpk['e_gh'] * (R ** (-time))==pi['pi2']['y'] and \

@@ -38,8 +38,12 @@ time=groupObj.hash(objectToBytes(str(datetime.now()), groupObj),ZR)
 def run_round_trip(n,k,M,C):
     #n=10; k=math.floor(n/2)
     result=[n,k,M,C]
-    Mer = ['Apple'] * M
-    Cus = ['Alice'] * C
+    Mer = []
+    for i in range(M):
+        Mer.append('Apple'+str(i+1))
+    Cus = []
+    for i in range(C):
+        Cus.append('Alice'+str(i+1))
     # setup
     setup_time = 0
     for i in range(10):
@@ -116,7 +120,7 @@ def run_round_trip(n,k,M,C):
     AuCreatetime=0
     for i in range(10):
         start_bench(groupObj)
-        cert_j = Nir.AuCreate(mpk,Sgk_a,kprime,k)
+        cert_j,w_j,listIndexes = Nir.AuCreate(mpk,Sgk_a,kprime,k,Mer,math.floor(math.log2(len(Mer))))
         AuCreatetime += end_bench(groupObj)
     AuCreatetime = AuCreatetime * 100
     result.append(AuCreatetime)
@@ -133,8 +137,9 @@ def run_round_trip(n,k,M,C):
     Spending_time = 0; time=groupObj.hash(objectToBytes(str(datetime.now()), groupObj),ZR)
     for i in range(1):
         start_bench(groupObj)
-        (pi,inp,R) = Nir.Spending(mpk, key, Pk_b[8], time,ID, Sk_c[10],cert_j)
+        (pi,inp,R,wprime_j) = Nir.Spending(mpk, key, Pk_b[8], time,ID, Sk_c[10],cert_j,w_j,listIndexes)
         Spending_time += end_bench(groupObj)
+    print(wprime_j)
     Spending_time = Spending_time * 10
     result.append(Spending_time)
     Ciphertext_size = sum([len(x) for x in serializeDict(inp, groupObj).values()]) + sum([len(x) for x in serializeDict(pi, groupObj).values()]) 
