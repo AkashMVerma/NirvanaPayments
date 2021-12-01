@@ -177,7 +177,7 @@ book=Workbook()
 data=book.active
 title=["n","d","M","C","setup_time","public_parameters_size","AuKeyGentime","AU-Verification_size","Mkeygentime","MRegistertime","CuKeyGentime","CuRegistertime","CuCreatetime","AuCreatetime","Collateral_size","Spending_time","Request_size","Verification_time","Decryption_time"]
 data.append(title)
-for n in range(10,11):
+for n in range(10,20):
     data.append(run_round_trip(n,math.floor(n/2),5*n,5*n))
     print(n)
 book.save("NewResult.xlsx")
