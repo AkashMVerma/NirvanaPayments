@@ -12,19 +12,6 @@ from TSPS import TSPS
 from BLS import BLS01
 from secretshare import SecretShare as SSS
 
-'''
-mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gh':GT, 'e_Xh':GT, 'vk':G2 , 'X': G1 }
-msk_t = { 'sec':ZR, 'sgk':ZR }
-pk_t = { 'pk':G2, 'Merlist':str }
-sk_t = { 'shares': ZR }
-Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
-Rand_t = {'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
-ct_t = { 'C':GT, 'C1':GT, 'R':GT}
-proof_t = {'z': ZR, 't': GT, 'y': GT}
-proof1_t = {'z1': ZR, 'z2': ZR, 't': GT, 'y': GT}
-prf_t= {'H':G1, 't':G1, 'c':ZR, 'r':ZR}
-'''
-
 class Nirvana():
     def __init__(self, groupObj):
         global util, group
