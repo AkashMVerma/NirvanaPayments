@@ -111,7 +111,7 @@ def run_round_trip(n,k,M,C):
     CuCreatetime=0
     for i in range(10):
         start_bench(groupObj)
-        (key, N, kprime,certprime) = Nir.CuCreate(mpk,cert_c[10])
+        (key, N, kprime,certprime,picol) = Nir.CuCreate(mpk,cert_c[10])
         CuCreatetime += end_bench(groupObj)
     CuCreatetime = CuCreatetime * 100
     result.append(CuCreatetime)
@@ -121,7 +121,7 @@ def run_round_trip(n,k,M,C):
     AuCreatetime=0
     for i in range(10):
         start_bench(groupObj)
-        cert_j,w_j,listIndexes, N_j = Nir.AuCreate(mpk,Sgk_a,kprime,k,Mer,math.floor(math.log2(len(Mer))))
+        cert_j,w_j,listIndexes, N_j = Nir.AuCreate(mpk,Sgk_a,kprime,k,Mer,math.floor(math.log2(len(Mer))),certprime,picol)
         AuCreatetime += end_bench(groupObj)
     AuCreatetime = AuCreatetime * 100
     result.append(AuCreatetime)

@@ -71,13 +71,14 @@ class Nirvana():
 
     def CuCreate(self, mpk,cert_cn):
         K={}; Kprime={}; Col={}
-        k = group.random()
-        kprime = mpk['g']**k
-        N = mpk['h']**k 
-        certprime=TSPS.Randomize(self.TSPS, cert_cn)
-        return (k, N, kprime, certprime)
+        key = group.random()
+        kprime = mpk['g']**key
+        N = mpk['h']**key
+        pi=PoK.prover1(self.PoK,mpk['g'],kprime,key)
+        certprime = TSPS.Randomize(self.TSPS, cert_cn)
+        return (key, N, kprime, certprime,pi)
     
-    def AuCreate(self,mpk,Sgk_a,kprime,k,wit,w):
+    def AuCreate(self,mpk,Sgk_a,kprime,k,wit,w,certprime,picol):
         sigma1 = TSPS.par_sign1(self.TSPS,mpk,kprime,k)
         sigma = TSPS.par_sign2(self.TSPS,sigma1,Sgk_a,k)
         sigmaR = TSPS.reconst(self.TSPS,sigma,k)
