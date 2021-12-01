@@ -12,12 +12,24 @@ from TSPS import TSPS
 from BLS import BLS01
 from secretshare import SecretShare as SSS
 
-class Witness():
 
+class Witness():
     def __init__(self, groupObj):
         global util, group
         util = SecretUtil(groupObj)
         group = groupObj
+        self.TSPS = TSPS(groupObj)
         
-    def WitnessApproval(R,wprime_j,wit):
         
+
+    def WitnessApproval(self,mpk, pk, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger):
+        for i in witnessindexes:
+            print(wprime_j[i])
+            sigma={}
+            if R not in Ledger[i] and \
+                TSPS.verify(self.TSPS,mpk,pk,N_j[i],wprime_j[i])==1:
+                sigma[i] = BLS01.sign(self.BLS01,Sk_b[i], R)
+                Ledger[i].append(R)
+        return sigma
+
+

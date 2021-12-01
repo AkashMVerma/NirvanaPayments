@@ -29,7 +29,7 @@ TSPS = TSPS(groupObj)
 BLS01 = BLS01(groupObj)
 
 
-Ledger=[]
+
 time=groupObj.hash(objectToBytes(str(datetime.now()), groupObj),ZR)
 
 
@@ -41,6 +41,7 @@ def run_round_trip(n,k,M,C):
     Mer = []
     for i in range(M):
         Mer.append('Apple'+str(i+1))
+    Ledger=dict.fromkeys(list(range(M)), [])
     Cus = []
     for i in range(C):
         Cus.append('Alice'+str(i+1))
@@ -120,7 +121,7 @@ def run_round_trip(n,k,M,C):
     AuCreatetime=0
     for i in range(10):
         start_bench(groupObj)
-        cert_j,w_j,listIndexes = Nir.AuCreate(mpk,Sgk_a,kprime,k,Mer,math.floor(math.log2(len(Mer))))
+        cert_j,w_j,listIndexes, N_j = Nir.AuCreate(mpk,Sgk_a,kprime,k,Mer,math.floor(math.log2(len(Mer))))
         AuCreatetime += end_bench(groupObj)
     AuCreatetime = AuCreatetime * 100
     result.append(AuCreatetime)
@@ -153,8 +154,7 @@ def run_round_trip(n,k,M,C):
     Verification_time = 0
     for i in range(1):
         start_bench(groupObj)
-        Ledger=[]
-        out = Nir.Verification(mpk, Pk_a, N, pi, inp, R, Ledger, time,L1,L2, Pk_b[8])
+        out = Nir.Verification(mpk, Pk_a, N, pi, inp, R, Ledger, time,L1,L2, Pk_b[8], wprime_j, listIndexes,N_j,Sk_b)
         print(out)
         Verification_time += end_bench(groupObj)
     Verification_time = Verification_time * 10

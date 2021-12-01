@@ -11,6 +11,8 @@ from PoK import PoK
 from TSPS import TSPS
 from BLS import BLS01
 from secretshare import SecretShare as SSS
+from Witness import Witness
+import math
 
 class Nirvana():
     def __init__(self, groupObj):
@@ -21,7 +23,8 @@ class Nirvana():
         self.TSPS = TSPS(groupObj)
         self.BLS01 = BLS01(groupObj)
         self.PoK = PoK(groupObj)
-  
+        self.witness = Witness(groupObj)
+
     def PGen(self):
         mpk = TSPS.PGen(self)
         return (mpk)
@@ -80,17 +83,17 @@ class Nirvana():
         sigmaR = TSPS.reconst(self.TSPS,sigma,k)
         cert_j=sigmaR
         selectedWitnesses = random.sample(wit,w)
-        w_j = {}
+        w_j = {}; N_j={}
         list_witness_indexes = []
         for i in range(len(selectedWitnesses)):
-            
             Witness_int=group.hash(objectToBytes(selectedWitnesses[i], group),ZR)
             sigma1 = TSPS.par_sign1(self.TSPS, mpk, mpk['g']**Witness_int,k)
             sigma = TSPS.par_sign2(self.TSPS,sigma1,Sgk_a,k)
             sigmaR = TSPS.reconst(self.TSPS,sigma,k)
             list_witness_indexes.append(wit.index(selectedWitnesses[i]))
             w_j[list_witness_indexes[i]] = sigmaR
-        return cert_j,w_j,list_witness_indexes
+            N_j[list_witness_indexes[i]] = mpk['h'] ** Witness_int
+        return cert_j,w_j,list_witness_indexes, N_j
 
     def Spending(self, mpk, key, pk_bm, time,ID,Sk_cn,cert_j,w_j,listWitness):
         r = mpk['g'] ** (1/(key+time))
@@ -101,6 +104,7 @@ class Nirvana():
         wprime_j = {}
         for i in listWitness:
             wprime_j[i] = TSPS.Randomize(self.TSPS,w_j[i])
+            print(wprime_j[i])
         certprime_j = TSPS.Randomize(self.TSPS,cert_j)
         y2 = R ** key; A= A1 ** key
         u = mpk['e_gh'] ** (key * Sk_cn)
@@ -113,7 +117,7 @@ class Nirvana():
         return (pi, inp, R,wprime_j)
 
 
-    def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk,wprime_j,wit):
+    def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_b):
         if R not in Ledger and \
             TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1 and \
                 mpk['e_gh'] * (R ** (-time))==pi['pi2']['y'] and \
@@ -123,11 +127,11 @@ class Nirvana():
                         PoK.verifier5(self.PoK,pi['pi2']['y'],pi['pi2']['z'],pi['pi2']['t'],R) == 1 and \
                             PoK.verifier4(self.PoK,pi['pi3']['y'],pi['pi3']['z'],pi['pi3']['t'],inp['C1'],pk) == 1 and \
                                 PoK.verifier2(self.PoK,inp['C'],mpk['e_gh'],pi['pi4']['y'],pi['pi4']['z1'],pi['pi4']['z2'],pi['pi4']['t'],inp['u'])==1:
-                
-                Ledger.append(R)
-                return Ledger
+                                        sigma = Witness.WitnessApproval(self.witness,mpk, pk, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
+                                        if len(sigma)>= math.ceiling(len(witnessindexes)/2):
+                                            return print("Verification succeeded")
         else:
-            return print("False")
+            return print("Verification failed")
 
     def Decryption(self, mpk, ct1, M1, ct2, M2): 
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
