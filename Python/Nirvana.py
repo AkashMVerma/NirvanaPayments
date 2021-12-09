@@ -130,9 +130,9 @@ class Nirvana():
                                 PoK.verifier2(self.PoK,inp['C'],mpk['e_gh'],pi['pi4']['y'],pi['pi4']['z1'],pi['pi4']['z2'],pi['pi4']['t'],inp['u'])==1:
                                         sigma = Witness.WitnessApproval(self.witness,mpk, Pk_a, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
                                         if len(sigma)>= math.ceil(len(witnessindexes)/2):
-                                            return print("Verification succeeded")
+                                            print("Verification succeeded")
         else:
-            return print("Verification failed")
+            print("Verification failed")
 
     def Decryption(self, mpk, ct1, M1, ct2, M2): 
         Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])

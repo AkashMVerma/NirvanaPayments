@@ -23,13 +23,12 @@ class Witness():
         
 
     def WitnessApproval(self,mpk, pk, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger):
+        sigma = {}
         for i in witnessindexes:
-            print(wprime_j[i])
-            sigma={}
             if R not in Ledger[i] and \
                 TSPS.verify(self.TSPS,mpk,pk,N_j[i],wprime_j[i])==1:
                 sigma[i] = BLS01.sign(self.BLS01,Sk_b[i], R)
-                Ledger[i].append(R)
+                #Ledger[i].append(R)
         return sigma
 
 

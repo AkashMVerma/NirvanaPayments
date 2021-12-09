@@ -140,7 +140,6 @@ def run_round_trip(n,k,M,C):
         start_bench(groupObj)
         (pi,inp,R,wprime_j) = Nir.Spending(mpk, key, Pk_b[8], time,ID, Sk_c[10],cert_j,w_j,listIndexes)
         Spending_time += end_bench(groupObj)
-    print(wprime_j)
     Spending_time = Spending_time * 10
     result.append(Spending_time)
     Ciphertext_size = sum([len(x) for x in serializeDict(inp, groupObj).values()]) + sum([len(x) for x in serializeDict(pi, groupObj).values()]) 
@@ -155,7 +154,6 @@ def run_round_trip(n,k,M,C):
     for i in range(1):
         start_bench(groupObj)
         out = Nir.Verification(mpk, Pk_a, N, pi, inp, R, Ledger, time,L1,L2, Pk_b[8], wprime_j, listIndexes,N_j,Sk_b)
-        print(out)
         Verification_time += end_bench(groupObj)
     Verification_time = Verification_time * 10
     result.append(Verification_time) 
@@ -177,7 +175,7 @@ book=Workbook()
 data=book.active
 title=["n","d","M","C","setup_time","public_parameters_size","AuKeyGentime","AU-Verification_size","Mkeygentime","MRegistertime","CuKeyGentime","CuRegistertime","CuCreatetime","AuCreatetime","Collateral_size","Spending_time","Request_size","Verification_time","Decryption_time"]
 data.append(title)
-for n in range(10,20):
+for n in range(10,11):
     data.append(run_round_trip(n,math.floor(n/2),5*n,5*n))
     print(n)
 book.save("NewResult.xlsx")
