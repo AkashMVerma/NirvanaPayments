@@ -37,12 +37,10 @@ class BLS01(IBSig):
     def dump(self, obj):
         return objectToBytes(obj, group)
             
-    def keygen(self, secparam=None):
-        g, x = group.random(G2), group.random()
+    def keygen(self, g, secparam=None):
+        x = group.random()
         g_x = g ** x
-        pk = { 'g^x':g_x, 'g':g, 'identity':str(g_x), 'secparam':secparam }
-        sk = { 'x':x }
-        return (pk, sk)
+        return (g_x, x)
         
     def sign(self, x, message):
         M = self.dump(message)

@@ -6,73 +6,79 @@ from charm.core.engine.util import serializeDict,objectToBytes, bytesToObject, d
 import random
 import time
 import zmq
+from secretshare import SecretShare as SSS
 from datetime import datetime
+from BLS import BLS01
 from openpyxl import load_workbook
 from openpyxl import Workbook
 from PoK import PoK
-
-mpk_t = { 'g':G1, 'h':G2, 'pp': G2, 'e_gh':GT, 'e_Xh':GT, 'vk':G2 , 'X': G1 }
-pk_t = { 'pk':G2, 'Merlist':str }
-Col_t = { 'PRFkey': ZR, 'key':G1, 'R':G2, 'S':G1, 'T':G1, 'W':G1 }
-Rand_t = {'Rprime':G2, 'Sprime':G1, 'Tprime':G1, 'Wprime':G1}
-ct_t = { 'C':GT, 'C1':GT, 'R':GT}
-proof1_t = {'p1z': ZR, 'p1t': GT, 'p1y': GT}
-proof4_t = {'p4z': ZR, 'p4t': GT, 'p4y': GT}
-proof3_t = {'p3z': ZR, 'p3t': GT, 'p3y': GT}
-proof2_t = {'p2z1': ZR, 'p2z2': ZR, 'p2t': GT, 'p2y': GT}
+from TSPS import TSPS
+from Witness import Witness
+import math
 
 
 class Merchant():
     def __init__(self):
-        global Mer, groupObj
+        global groupObj
         groupObj = PairingGroup('BN254')
         self.PoK = PoK(groupObj)
         self.SSS = SecretShare(groupObj)
         self.context = zmq.Context()
         self.socket_receiveProof = self.context.socket(zmq.REQ)
-        Mer = ['Apple','Ebay','Tesco','Amazon','Tesla','Colruyt','BMW','hp','Albert','IKEA']
+        self.TSPS = TSPS(groupObj)
+        self.BLS01 = BLS01(groupObj)
+        self.witness = Witness(groupObj)
 
     #requesting public parameters from Nirvana
-    @Output(mpk_t)
     def request_pp(self):
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting parameters...")
-        socket_pull = self.context.socket(zmq.PULL)
-        socket_pull.connect("tcp://localhost:5556")
-        mpk = socket_pull.recv()
-        mpk = mpk.decode('utf-8')
-        mpk = bytesToObject(mpk, groupObj)
+        socket_pull = self.context.socket(zmq.SUB)
+        socket_pull.setsockopt(zmq.SUBSCRIBE, b"")
+        socket_pull.connect("tcp://localhost:5546")
+        msg = socket_pull.recv()
+        mpk = bytesToObject(msg, groupObj)
         socket_pull.close()
-        return mpk
+        return mpk[0],mpk[1],mpk[2]
 
     #Requesting public key from Nirvana
-    @Output(G2)
-    def request_pk(self):
+    
+    def MKeygen(self,mpk,M):
+        Vk_b={};Sk_b={}
+        for i in range(M):
+            (vk_b,sk_b)=BLS01.keygen(self.BLS01, mpk['g'])
+            Vk_b[i]=vk_b; Sk_b[i]=sk_b    
+        return (Vk_b,Sk_b)
+
+    def request_pk(self,merchant_index,vk_b):
+        vk_merchant = vk_b[merchant_index]
+        vk_merchant = objectToBytes(vk_merchant,groupObj)
         self.context = zmq.Context()
         print("Connecting to NirvanaTTP, requesting public key...")
         socket = self.context.socket(zmq.REQ)
-        socket.connect("tcp://localhost:5557")
+        socket.connect("tcp://localhost:5547")
         print(f"Sending request for public key ...")
-        socket.send_string("Apple")
+        socket.send(vk_merchant)
 
         message_pk = socket.recv()
         merchant_public_key = bytesToObject(message_pk, groupObj)
-        print(f"Received public key [ {merchant_public_key} ]")
+        pk_merchant = merchant_public_key[0]
+        cert_merchant = merchant_public_key[1]
+        new_mpk = merchant_public_key[2]
+        print(f"Received public key [ {pk_merchant} ]")
         socket.close()
-        return merchant_public_key
+        return pk_merchant, cert_merchant, new_mpk
     
     
     
 
     #Requesting payment guarantee from Customer
-    @Input(int, G2)
-    @Output(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, ZR)
-    def request_proof(self, num_col, merchant_public_key):
+    def request_proof(self, merchant_public_key,new_mpk):
         print("Connecting to customer, requesting proofs and ciphertext...")
         # socket_receiveProof = self.context.socket(zmq.REQ)
         # #socket_receiveProof.connect("tcp://81.164.204.249:5550")
-        self.socket_receiveProof.connect("tcp://localhost:5550")
-        proof_request_cust = (num_col, merchant_public_key)
+        self.socket_receiveProof.connect("tcp://localhost:5540")
+        proof_request_cust = (merchant_public_key,new_mpk)
         merchant_public_key = objectToBytes(proof_request_cust, groupObj)
         self.socket_receiveProof.send(merchant_public_key)
         #time.sleep(0.2)
@@ -82,81 +88,90 @@ class Merchant():
         return received_proof
         
     #Verifying payment guarantee from customer and appending payment ciphertext to the ledger
-    @Input(mpk_t, Rand_t, ct_t, proof1_t, proof4_t, proof3_t, proof2_t, G2, int, list, ZR)
-    @Output(list)
-    def Verification(self, mpk, Rand, ct, proof1, proof2, proof3, proof4, mer_pk, d, Ledger, time):
-        LHS=1
-        for i in range(len(ct['R'])):
-            LHS *= (mpk['e_gh'] * ct['R'][i] ** (-time)) 
-        if pair(Rand['Sprime'], Rand['Rprime']) == proof1['p1y'] * mpk['e_Xh'] ** d and \
-            pair(Rand['Tprime'],Rand['Rprime']) == pair(Rand['Sprime'],mpk['vk']) * mpk['e_gh']**d and \
-                LHS==proof2['p4y'] and \
-                    pair(mpk['g'],mpk['pp']) * (ct['C']**(-time)) == proof4['p2y'] and \
-                    pair(mpk['g'],mer_pk) * (ct['C1'] ** (-time)) == proof3['p3y'] and \
-                    self.PoK.verifier3(mpk['g'],proof1['p1y'],proof1['p1z'],proof1['p1t'],mpk['vk']) == 1 and \
-                        self.PoK.verifier5(proof2['p4y'],proof2['p4z'],proof2['p4t'],ct['R']) == 1 and \
-                            self.PoK.verifier4(proof3['p3y'],proof3['p3z'],proof3['p3t'],ct['C1'],mer_pk) == 1 and \
-                                self.PoK.verifier2(ct['C'],mpk['e_gh'],proof4['p2y'],proof4['p2z1'],proof4['p2z2'],proof4['p2t'])==0 and \
-                                ct['R'] not in Ledger:
-                Ledger.append(ct['R'])
-                print("passed verification..")
-                return Ledger
+    def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_b):
+        if R not in Ledger and \
+            TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1 and \
+                mpk['e_gh'] * (R ** (-time))==pi['pi2']['y'] and \
+                    L1 * (inp['C']**(-time)) == pi['pi4']['y'] and \
+                    L2 * (inp['C1'] ** (-time)) == pi['pi3']['y'] and \
+                        PoK.verifier3(self.PoK,mpk['g'],pi['pi1']['y'],pi['pi1']['z'],pi['pi1']['t'],mpk['pp']) == 0 and \
+                        PoK.verifier5(self.PoK,pi['pi2']['y'],pi['pi2']['z'],pi['pi2']['t'],R) == 1 and \
+                            PoK.verifier4(self.PoK,pi['pi3']['y'],pi['pi3']['z'],pi['pi3']['t'],inp['C1'],pk) == 1 and \
+                                PoK.verifier2(self.PoK,inp['C'],mpk['e_gh'],pi['pi4']['y'],pi['pi4']['z1'],pi['pi4']['z2'],pi['pi4']['t'],inp['u'])==1:
+                                        sigma = Witness.WitnessApproval(self.witness,mpk, Pk_a, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
+                                        if len(sigma)>= math.ceil(len(witnessindexes)/2):
+                                            return print("Verification succeeded")
         else:
-            print("verification failed.. customer is malicious..")
-            return Ledger
+            return print("Verification failed")
 
     #revealing identity of customer in case of double-spending
-    @Input(mpk_t, ct_t, int, ct_t, int)
-    @Output(GT)
     def Decryption(self, mpk, ct1, M1, ct2, M2): 
-        Coeff = SSS.recoverCoefficients([group.init(ZR, M1+1),group.init(ZR, M2+1)])
+        Coeff = SSS.recoverCoefficients([groupObj.init(ZR, M1+1),groupObj.init(ZR, M2+1)])
         return ct2['C'] / ((ct1['C1']**Coeff[M1+1])*(ct2['C1']**Coeff[M2+1]))  
 
 
-def start_bench(group):
-    group.InitBenchmark()
-    group.StartBenchmark(["RealTime"])
 
-def end_bench(group):
-    group.EndBenchmark()
-    benchmarks = group.GetGeneralBenchmarks()
-    real_time = benchmarks['RealTime']
-    return real_time
 
-#main run
-m = Merchant()
-mer_pk = m.request_pk()
-Ledger = []
-def run_comm_trip(d):
-    result = [d]
-    verify_time = 0    
-    spend_time = 0
-    for i in range(10):
+    def main():
+        print("in Merchant's main")
+        def start_bench(group):
+            group.InitBenchmark()
+            group.StartBenchmark(["RealTime"])
+
+        def end_bench(group):
+            group.EndBenchmark()
+            benchmarks = group.GetGeneralBenchmarks()
+            real_time = benchmarks['RealTime']
+            return real_time
+        m = Merchant()
+        mpk,pk_a,num_mer = m.request_pp()
+
+        #def run_round_trip(j):
+        #main run'Spending Time','
+        result=[num_mer]
+            
+        Mer = []
+        for i in range(int(num_mer)):
+            Mer.append('Apple'+str(i+1))
+        (vk_b,sk_b) = m.MKeygen(mpk,int(num_mer))
+        mer_pk, mer_cert, new_mpk = m.request_pk(5,vk_b)
+
+
+
+        Ledger=dict.fromkeys(list(range(len(Mer))), [])
+
+        #start_bench(groupObj)
+        spend_time = 0
+        Verification_time = 0
         start_bench(groupObj)
-        spend_proof = m.request_proof(d, mer_pk)
-        spend_time += end_bench(groupObj)
-        mpkst = spend_proof[0]
-        randomstr = spend_proof[1]
-        ct1st = spend_proof[2]
-        proof1st = spend_proof[3]
-        proof2st = spend_proof[4]
-        proof3st = spend_proof[5]
-        proof4st = spend_proof[6]
-        timest = spend_proof[7]
+        spend_proof,N, list_witness_index, N_j,time = m.request_proof(mer_pk,new_mpk)
+        spend_time +=end_bench(groupObj)
+        pi = spend_proof[0]
+        inp = spend_proof[1]
+        R = spend_proof[2]
+        wprime_j = spend_proof[3]
+        L1=pair(new_mpk['g'],new_mpk['pp']) 
+        L2=pair(new_mpk['g'],mer_pk)
+        Verification_time=0
         start_bench(groupObj)
-        out = m.Verification(mpkst, randomstr, ct1st, proof1st, proof2st, proof3st, proof4st, mer_pk, d, Ledger, timest)
-        verify_time += end_bench(groupObj)
-    spend_time = (spend_time*100)
-    result.append(spend_time)
-    verify_time = (verify_time*100)
-    result.append(verify_time) 
-    return result  
+        out = m.Verification(new_mpk, pk_a,N, pi, inp, R, Ledger, time, L1, L2, mer_pk,wprime_j, list_witness_index, N_j, sk_b)
+        Verification_time += end_bench(groupObj)
+        result.append(spend_time)
+        result.append(Verification_time)
+        result.append(len(wprime_j))
+        #verify_time += end_bench(groupObj)
+        #spend_time = (spend_time*100)
+        #result.append(spend_time)
+        #verify_time = (verify_time*100)
+        #result.append(verify_time) 
+        book=Workbook()
+        data=book.active    
+        title = ['total_merchants','Spending time','Verification time', 'total_witnesses']
+        data.append(title)   
+        data.append(result)
+        book.save('Verify_comm'+str(num_mer)+'.xlsx')
 
-book=Workbook()
-data=book.active    
-title = ['d','Spending Time','Verification Time']
-data.append(title) 
-for i in range(1,11):
-    result=run_comm_trip(i)  
-    data.append(result)
-book.save('Verify_comm_preprocc.xlsx')
+if __name__ == "__main__":
+    Merchant.main()
+   
+
