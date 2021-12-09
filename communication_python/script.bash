@@ -7,5 +7,7 @@ do
     python3 Merchant.py & disown
     sleep 2
     python3 Customer_preprocessed.py &disown
+    sleep 2
+    python3 Witness.py &disown
     sleep 30
 done

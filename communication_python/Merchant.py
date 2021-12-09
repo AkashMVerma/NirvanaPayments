@@ -89,6 +89,9 @@ class Merchant():
         
     #Verifying payment guarantee from customer and appending payment ciphertext to the ledger
     def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_b):
+        self.context = zmq.Context()
+        socket_witness = self.context.socket(zmq.REQ)
+        socket_witness.connect("tcp://localhost:5535")
         if R not in Ledger and \
             TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1 and \
                 mpk['e_gh'] * (R ** (-time))==pi['pi2']['y'] and \
@@ -98,9 +101,15 @@ class Merchant():
                         PoK.verifier5(self.PoK,pi['pi2']['y'],pi['pi2']['z'],pi['pi2']['t'],R) == 1 and \
                             PoK.verifier4(self.PoK,pi['pi3']['y'],pi['pi3']['z'],pi['pi3']['t'],inp['C1'],pk) == 1 and \
                                 PoK.verifier2(self.PoK,inp['C'],mpk['e_gh'],pi['pi4']['y'],pi['pi4']['z1'],pi['pi4']['z2'],pi['pi4']['t'],inp['u'])==1:
-                                        sigma = Witness.WitnessApproval(self.witness,mpk, Pk_a, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
-                                        if len(sigma)>= math.ceil(len(witnessindexes)/2):
+                                        for_witness = (mpk,Pk_a,R,wprime_j,witnessindexes,N_j,Sk_b,Ledger)
+                                        for_witness = objectToBytes(for_witness,groupObj)
+                                        socket_witness.send(for_witness)
+                                        from_witness = socket_witness.recv()
+                                        from_witness = bytesToObject(from_witness,groupObj)
+                                        #sigma = Witness.WitnessApproval(self.witness,mpk, Pk_a, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
+                                        if len(from_witness)>= math.ceil(len(witnessindexes)/2):
                                             print("Verification succeeded")
+                                            socket_witness.close()
         else:
             print("Verification failed")
 
