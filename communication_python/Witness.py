@@ -22,12 +22,14 @@ class Witness():
         self.TSPS = TSPS(groupObj)
         self.BLS01 = BLS01(groupObj)
         
+        
 
     def WitnessApproval(self):
         sigma={}
-        self.context = zmq.Context()
-        socket_verify = self.context.socket(zmq.REP)
+        context = zmq.Context()
+        socket_verify = context.socket(zmq.REP)
         socket_verify.bind("tcp://*:5535") 
+        
         received_guarantee = socket_verify.recv()
         received_guarantee = bytesToObject(received_guarantee,group)
         mpk = received_guarantee[0]
@@ -37,12 +39,11 @@ class Witness():
         witnessindexes = received_guarantee[4]
         N_j = received_guarantee[5]
         Sk_b = received_guarantee[6]
-        Ledger = received_guarantee[7]
+        Ledger = []
         for i in witnessindexes:
-            if R not in Ledger[str(i)] and \
+            if R not in Ledger and \
                 TSPS.verify(self.TSPS,mpk,pk,N_j[str(i)],wprime_j[str(i)])==1:
                 sigma[i] = BLS01.sign(self.BLS01,Sk_b[str(i)], R)
-                Ledger[str(i)].append(R)
         sigma = objectToBytes(sigma,group)
         socket_verify.send(sigma)
         socket_verify.close()

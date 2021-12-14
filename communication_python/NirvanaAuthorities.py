@@ -144,7 +144,7 @@ class Nirvana():
                 print(f"Sent certificate to customer: {cert}..")
                 approved_registration = objectToBytes(cert,groupObj)
                 socket_clientReg.send(approved_registration)
-                
+                #time.sleep(10)
                 socket_clientReg.close()
 
             if socket_clientSig in socks:
@@ -158,7 +158,9 @@ class Nirvana():
                 print(f"Sent collateral proof.. : {data_to_send}")
                 collateral_proofs = objectToBytes(data_to_send, groupObj)
                 socket_clientSig.send(collateral_proofs)
+                #time.sleep(10)
                 socket_clientSig.close()
+                
                 
             if socket_merchant in socks:
                 #keygen
@@ -175,5 +177,5 @@ class Nirvana():
 
 if __name__ =="__main__":
     #Nirvana.main(sys.argv[1])
-    Nirvana.main('100')
+    Nirvana.main('30000')
         
