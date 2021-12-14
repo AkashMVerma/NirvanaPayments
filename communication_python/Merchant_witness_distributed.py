@@ -88,10 +88,7 @@ class Merchant():
         return received_proof
         
     #Verifying payment guarantee from customer and appending payment ciphertext to the ledger
-    def Verification(self, mpk, Pk_a, N, pi ,inp, R, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_b):
-        self.context = zmq.Context()
-        socket_witness = self.context.socket(zmq.REQ)
-        socket_witness.connect("tcp://localhost:5535")
+    def Verification(self, mpk, Pk_a, N, pi ,inp, R, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_b,socket_witness):
         if TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1 and \
                 mpk['e_gh'] * (R ** (-time))==pi['pi2']['y'] and \
                     L1 * (inp['C']**(-time)) == pi['pi4']['y'] and \
@@ -162,7 +159,10 @@ class Merchant():
         L2=pair(new_mpk['g'],mer_pk)
         Verification_time=0
         start_bench(groupObj)
-        out = m.Verification(new_mpk, pk_a,N, pi, inp, R, time, L1, L2, mer_pk,wprime_j, list_witness_index, N_j, sk_b)
+        context = zmq.Context()
+        socket_witness = context.socket(zmq.REQ)
+        socket_witness.connect("tcp://localhost:5535")
+        out = m.Verification(new_mpk, pk_a,N, pi, inp, R, time, L1, L2, mer_pk,wprime_j, list_witness_index, N_j, sk_b,socket_witness)
         Verification_time = end_bench(groupObj)
         result.append(spend_time)
         result.append(Verification_time)
