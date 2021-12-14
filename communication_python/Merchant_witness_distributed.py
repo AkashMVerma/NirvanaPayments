@@ -13,7 +13,7 @@ from openpyxl import load_workbook
 from openpyxl import Workbook
 from PoK import PoK
 from TSPS import TSPS
-from Witness_local import Witness
+from Witness import Witness
 import math
 
 
@@ -90,8 +90,8 @@ class Merchant():
     #Verifying payment guarantee from customer and appending payment ciphertext to the ledger
     def Verification(self, mpk, Pk_a, N, pi ,inp, R, Ledger, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_b):
         self.context = zmq.Context()
-        #socket_witness = self.context.socket(zmq.REQ)
-        #socket_witness.connect("tcp://localhost:5535")
+        socket_witness = self.context.socket(zmq.REQ)
+        socket_witness.connect("tcp://localhost:5535")
         if R not in Ledger and \
             TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1 and \
                 mpk['e_gh'] * (R ** (-time))==pi['pi2']['y'] and \
@@ -101,15 +101,15 @@ class Merchant():
                         PoK.verifier5(self.PoK,pi['pi2']['y'],pi['pi2']['z'],pi['pi2']['t'],R) == 1 and \
                             PoK.verifier4(self.PoK,pi['pi3']['y'],pi['pi3']['z'],pi['pi3']['t'],inp['C1'],pk) == 1 and \
                                 PoK.verifier2(self.PoK,inp['C'],mpk['e_gh'],pi['pi4']['y'],pi['pi4']['z1'],pi['pi4']['z2'],pi['pi4']['t'],inp['u'])==1:
-                                        #for_witness = (mpk,Pk_a,R,wprime_j,witnessindexes,N_j,Sk_b,Ledger)
-                                        #for_witness = objectToBytes(for_witness,groupObj)
-                                        #socket_witness.send(for_witness)
-                                        #from_witness = socket_witness.recv()
-                                        #from_witness = bytesToObject(from_witness,groupObj)
-                                        sigma = Witness.WitnessApproval(self.witness,mpk, Pk_a, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
-                                        if len(sigma)>= math.ceil(len(witnessindexes)/2):
+                                        for_witness = (mpk,Pk_a,R,wprime_j,witnessindexes,N_j,Sk_b,Ledger)
+                                        for_witness = objectToBytes(for_witness,groupObj)
+                                        socket_witness.send(for_witness)
+                                        from_witness = socket_witness.recv()
+                                        from_witness = bytesToObject(from_witness,groupObj)
+                                        #sigma = Witness.WitnessApproval(self.witness,mpk, Pk_a, R, wprime_j, witnessindexes,N_j, Sk_b,Ledger)
+                                        if len(from_witness)>= math.ceil(len(witnessindexes)/2):
                                             print("Verification succeeded")
-                                            #socket_witness.close()
+                                            socket_witness.close()
         else:
             print("Verification failed")
 
@@ -154,7 +154,7 @@ class Merchant():
         Verification_time = 0
         start_bench(groupObj)
         spend_proof,N, list_witness_index, N_j,time = m.request_proof(mer_pk,new_mpk)
-        spend_time +=end_bench(groupObj)
+        spend_time = end_bench(groupObj)
         pi = spend_proof[0]
         inp = spend_proof[1]
         R = spend_proof[2]
@@ -164,7 +164,7 @@ class Merchant():
         Verification_time=0
         start_bench(groupObj)
         out = m.Verification(new_mpk, pk_a,N, pi, inp, R, Ledger, time, L1, L2, mer_pk,wprime_j, list_witness_index, N_j, sk_b)
-        Verification_time += end_bench(groupObj)
+        Verification_time = end_bench(groupObj)
         result.append(spend_time)
         result.append(Verification_time)
         result.append(len(wprime_j))

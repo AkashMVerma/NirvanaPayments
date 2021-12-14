@@ -153,7 +153,7 @@ class Nirvana():
                 message_client = bytesToObject(message_client,groupObj)
                 k_prime = message_client
                 print(f"Received request from customer for collateral signature..")
-                data_to_send = (Nir.AuCreate(mpk,sgk_a,k_prime, 5, Mer,math.floor(math.log2(len(Mer)))))
+                data_to_send = (Nir.AuCreate(mpk,sgk_a,k_prime, 5, Mer,math.floor(math.log10(len(Mer)))))
                 #print(Col)
                 print(f"Sent collateral proof.. : {data_to_send}")
                 collateral_proofs = objectToBytes(data_to_send, groupObj)
@@ -174,6 +174,6 @@ class Nirvana():
                 keep_receiving = False      
 
 if __name__ =="__main__":
-    Nirvana.main(sys.argv[1])
-    #Nirvana.main('100')
+    #Nirvana.main(sys.argv[1])
+    Nirvana.main('100')
         

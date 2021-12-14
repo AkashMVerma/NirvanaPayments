@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for i in {100..30001..5000}
+for i in {1000..71000..10000}
 do
     python3 NirvanaAuthorities.py $i  & disown
     sleep 2

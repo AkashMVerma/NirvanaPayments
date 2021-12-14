@@ -42,7 +42,7 @@ class Witness():
             if R not in Ledger[str(i)] and \
                 TSPS.verify(self.TSPS,mpk,pk,N_j[str(i)],wprime_j[str(i)])==1:
                 sigma[i] = BLS01.sign(self.BLS01,Sk_b[str(i)], R)
-                #Ledger[i].append(R)
+                Ledger[str(i)].append(R)
         sigma = objectToBytes(sigma,group)
         socket_verify.send(sigma)
         socket_verify.close()
