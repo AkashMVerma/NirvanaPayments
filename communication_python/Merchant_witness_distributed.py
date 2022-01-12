@@ -88,7 +88,7 @@ class Merchant():
         return received_proof
         
     #Verifying payment guarantee from customer and appending payment ciphertext to the ledger
-    def Verification(self, mpk, Pk_a, N, pi ,inp, R, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_b,socket_witness):
+    def Verification(self, mpk, Pk_a, N, pi ,inp, R, time,L1,L2,pk,wprime_j,witnessindexes,N_j,Sk_w,socket_witness,Ledger):
         if TSPS.verify(self.TSPS, mpk, Pk_a, N, inp['cert'])==1 and \
                 mpk['e_gh'] * (R ** (-time))==pi['pi2']['y'] and \
                     L1 * (inp['C']**(-time)) == pi['pi4']['y'] and \
@@ -97,7 +97,7 @@ class Merchant():
                         PoK.verifier5(self.PoK,pi['pi2']['y'],pi['pi2']['z'],pi['pi2']['t'],R) == 1 and \
                             PoK.verifier4(self.PoK,pi['pi3']['y'],pi['pi3']['z'],pi['pi3']['t'],inp['C1'],pk) == 1 and \
                                 PoK.verifier2(self.PoK,inp['C'],mpk['e_gh'],pi['pi4']['y'],pi['pi4']['z1'],pi['pi4']['z2'],pi['pi4']['t'],inp['u'])==1:
-                                        for_witness = (mpk,Pk_a,R,wprime_j,witnessindexes,N_j,Sk_b)
+                                        for_witness = (mpk,Pk_a,R,wprime_j,witnessindexes,N_j,Sk_w,Ledger)
                                         for_witness = objectToBytes(for_witness,groupObj)
                                         socket_witness.send(for_witness)
                                         from_witness = socket_witness.recv()
@@ -143,7 +143,7 @@ class Merchant():
 
 
 
-        Ledger=dict.fromkeys(list(range(len(Mer))), [])
+        
 
         #start_bench(groupObj)
         spend_time = 0
@@ -151,6 +151,13 @@ class Merchant():
         start_bench(groupObj)
         spend_proof,N, list_witness_index, N_j,time = m.request_proof(mer_pk,new_mpk)
         spend_time = end_bench(groupObj)
+        sk_w = {}
+        Ledger=dict.fromkeys(list_witness_index, [])
+        print(Ledger)
+        #counter = 0
+        for j in list_witness_index:
+            sk_w[j] = sk_b[j]
+            #counter += 1
         pi = spend_proof[0]
         inp = spend_proof[1]
         R = spend_proof[2]
@@ -158,11 +165,12 @@ class Merchant():
         L1=pair(new_mpk['g'],new_mpk['pp']) 
         L2=pair(new_mpk['g'],mer_pk)
         Verification_time=0
-        start_bench(groupObj)
+        
         context = zmq.Context()
         socket_witness = context.socket(zmq.REQ)
         socket_witness.connect("tcp://localhost:5535")
-        out = m.Verification(new_mpk, pk_a,N, pi, inp, R, time, L1, L2, mer_pk,wprime_j, list_witness_index, N_j, sk_b,socket_witness)
+        start_bench(groupObj)
+        out = m.Verification(new_mpk, pk_a,N, pi, inp, R, time, L1, L2, mer_pk,wprime_j, list_witness_index, N_j, sk_w,socket_witness,Ledger)
         Verification_time = end_bench(groupObj)
         result.append(spend_time)
         result.append(Verification_time)

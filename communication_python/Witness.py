@@ -39,11 +39,12 @@ class Witness():
         witnessindexes = received_guarantee[4]
         N_j = received_guarantee[5]
         Sk_b = received_guarantee[6]
-        Ledger = []
+        Ledger = received_guarantee[7]
         for i in witnessindexes:
-            if R not in Ledger and \
+            if R not in Ledger[str(i)] and \
                 TSPS.verify(self.TSPS,mpk,pk,N_j[str(i)],wprime_j[str(i)])==1:
                 sigma[i] = BLS01.sign(self.BLS01,Sk_b[str(i)], R)
+                Ledger[str(i)].append(R)
         sigma = objectToBytes(sigma,group)
         socket_verify.send(sigma)
         socket_verify.close()

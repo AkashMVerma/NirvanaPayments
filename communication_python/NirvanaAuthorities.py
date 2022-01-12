@@ -176,6 +176,6 @@ class Nirvana():
                 keep_receiving = False      
 
 if __name__ =="__main__":
-    #Nirvana.main(sys.argv[1])
-    Nirvana.main('30000')
+    Nirvana.main(sys.argv[1])
+    #Nirvana.main('30000')
         
